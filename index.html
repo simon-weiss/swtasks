@@ -12,12 +12,14 @@
   <style>
     :root {
       --bg: #0A0A0A;
-      --surface: #141414;
-      --border: #1F1F1F;
-      --border2: #2A2A2A;
+      --surface: #161616;
+      --surface2: #1E1E1E;
+      --border: #2A2A2A;
+      --border2: #3A3A3A;
       --text: #E8E4DE;
-      --muted: #555;
-      --muted2: #333;
+      --muted: #B0AAA0;
+      --muted2: #888880;
+      --muted3: #606060;
       --now: #D4FF4F;
       --later: #4FC3FF;
       --waiting: #FF8C4B;
@@ -27,450 +29,440 @@
       --safe-top: env(safe-area-inset-top, 0px);
       --safe-bottom: env(safe-area-inset-bottom, 0px);
     }
-
     * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
-
-    html, body {
-      height: 100%;
-      background: var(--bg);
-      color: var(--text);
-      font-family: var(--mono);
-      overscroll-behavior: none;
-    }
+    html, body { height: 100%; background: var(--bg); color: var(--text); font-family: var(--mono); overscroll-behavior: none; }
 
     #app {
-      display: flex;
-      flex-direction: column;
-      height: 100%;
-      max-width: 540px;
-      margin: 0 auto;
-      padding-top: var(--safe-top);
-      padding-bottom: var(--safe-bottom);
+      display: flex; flex-direction: column; height: 100%;
+      max-width: 580px; margin: 0 auto;
+      padding-top: var(--safe-top); padding-bottom: var(--safe-bottom);
     }
 
-    /* ── Header ── */
-    .header {
-      padding: 20px 20px 0;
+    /* ── Top bar ── */
+    .topbar {
       flex-shrink: 0;
+      padding: 18px 20px 0;
+      display: flex; flex-direction: column; gap: 0;
     }
+    .topbar-row {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 16px;
+    }
+    .wordmark { font-size: 10px; letter-spacing: 4px; color: var(--muted2); text-transform: uppercase; }
 
-    .header-top {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: 20px;
+    .view-toggle {
+      display: flex; gap: 2px;
+      background: var(--surface); border-radius: 8px; padding: 3px;
+      border: 1px solid var(--border);
     }
-
-    .wordmark {
-      font-family: var(--mono);
-      font-size: 10px;
-      letter-spacing: 4px;
-      color: var(--muted);
-      text-transform: uppercase;
+    .view-btn {
+      background: none; border: none; border-radius: 6px;
+      color: var(--muted2); font-family: var(--mono);
+      font-size: 9px; letter-spacing: 2px; text-transform: uppercase;
+      padding: 5px 12px; cursor: pointer; transition: all 0.15s;
     }
+    .view-btn.active { background: var(--surface2); color: var(--text); }
 
     .review-btn {
-      background: none;
-      border: 1px solid var(--border2);
-      border-radius: 20px;
-      color: var(--muted);
-      font-family: var(--mono);
-      font-size: 10px;
-      letter-spacing: 2px;
-      padding: 6px 14px;
-      cursor: pointer;
-      text-transform: uppercase;
-      transition: all 0.2s;
-      display: flex;
-      align-items: center;
-      gap: 6px;
+      background: none; border: 1px solid var(--border2);
+      border-radius: 20px; color: var(--muted);
+      font-family: var(--mono); font-size: 10px; letter-spacing: 2px;
+      padding: 6px 14px; cursor: pointer; text-transform: uppercase;
+      transition: all 0.2s; display: flex; align-items: center; gap: 6px;
     }
-    .review-btn:hover, .review-btn:active { border-color: var(--now); color: var(--now); }
+    .review-btn:hover { border-color: var(--now); color: var(--now); }
     .review-btn.loading { border-color: var(--now); color: var(--now); }
-
-    .review-btn .spinner {
-      width: 8px; height: 8px;
-      border: 1.5px solid var(--now);
-      border-top-color: transparent;
-      border-radius: 50%;
-      animation: spin 0.7s linear infinite;
-      display: none;
-    }
+    .spinner { width: 8px; height: 8px; border: 1.5px solid var(--now); border-top-color: transparent; border-radius: 50%; animation: spin 0.7s linear infinite; display: none; }
     .review-btn.loading .spinner { display: block; }
     .review-btn.loading .btn-label { display: none; }
-
     @keyframes spin { to { transform: rotate(360deg); } }
 
-    /* ── Tabs ── */
+    /* ── Tabs (status view) ── */
     .tabs {
-      display: flex;
-      border-bottom: 1px solid var(--border);
-      margin: 0 -20px;
-      padding: 0 20px;
+      display: flex; border-bottom: 1px solid var(--border);
+      margin: 0 -20px; padding: 0 20px;
     }
-
     .tab {
-      background: none;
-      border: none;
-      border-bottom: 2px solid transparent;
-      margin-bottom: -1px;
-      padding: 10px 16px 11px;
-      cursor: pointer;
-      font-family: var(--mono);
-      font-size: 10px;
-      letter-spacing: 3px;
-      color: var(--muted);
-      text-transform: uppercase;
-      display: flex;
-      align-items: center;
-      gap: 7px;
-      transition: all 0.15s;
-      flex-shrink: 0;
+      background: none; border: none; border-bottom: 2px solid transparent;
+      margin-bottom: -1px; padding: 10px 16px 11px;
+      cursor: pointer; font-family: var(--mono); font-size: 10px;
+      letter-spacing: 3px; color: var(--muted2); text-transform: uppercase;
+      display: flex; align-items: center; gap: 7px; transition: all 0.15s; flex-shrink: 0;
     }
     .tab.active[data-tab="Now"]     { color: var(--now);     border-bottom-color: var(--now); }
     .tab.active[data-tab="Later"]   { color: var(--later);   border-bottom-color: var(--later); }
     .tab.active[data-tab="Waiting"] { color: var(--waiting); border-bottom-color: var(--waiting); }
-
     .badge {
-      font-size: 9px;
-      padding: 1px 5px;
-      border-radius: 8px;
-      font-weight: 600;
-      letter-spacing: 0;
-      background: var(--border2);
-      color: var(--muted);
-      transition: all 0.15s;
+      font-size: 9px; padding: 1px 5px; border-radius: 8px;
+      font-weight: 600; letter-spacing: 0;
+      background: var(--border2); color: var(--muted); transition: all 0.15s;
     }
     .tab.active[data-tab="Now"]     .badge { background: var(--now);     color: #0A0A0A; }
     .tab.active[data-tab="Later"]   .badge { background: var(--later);   color: #0A0A0A; }
     .tab.active[data-tab="Waiting"] .badge { background: var(--waiting); color: #0A0A0A; }
 
-    /* ── Add input ── */
+    /* ── Add row ── */
     .add-row {
-      padding: 14px 20px;
-      display: flex;
-      gap: 10px;
-      flex-shrink: 0;
-      border-bottom: 1px solid var(--border);
+      padding: 12px 20px; display: flex; gap: 10px;
+      flex-shrink: 0; border-bottom: 1px solid var(--border);
     }
-
     .add-input {
-      flex: 1;
-      background: var(--surface);
-      border: 1px solid var(--border2);
-      border-radius: 8px;
-      color: var(--text);
-      font-family: var(--mono);
-      font-size: 13px;
-      padding: 10px 14px;
-      outline: none;
-      transition: border-color 0.15s;
-      -webkit-appearance: none;
+      flex: 1; background: var(--surface); border: 1px solid var(--border2);
+      border-radius: 8px; color: var(--text); font-family: var(--mono);
+      font-size: 13px; padding: 10px 14px; outline: none;
+      transition: border-color 0.15s; -webkit-appearance: none;
     }
-    .add-input::placeholder { color: var(--muted2); }
+    .add-input::placeholder { color: var(--muted3); }
     .add-input:focus { border-color: var(--active-accent, var(--now)); }
-
     .add-submit {
-      width: 42px;
-      background: var(--active-accent, var(--now));
-      border: none;
-      border-radius: 8px;
-      color: #0A0A0A;
-      font-size: 20px;
-      font-weight: 600;
-      cursor: pointer;
-      flex-shrink: 0;
-      transition: opacity 0.15s;
+      width: 42px; background: var(--active-accent, var(--now));
+      border: none; border-radius: 8px; color: #0A0A0A;
+      font-size: 20px; font-weight: 600; cursor: pointer;
+      flex-shrink: 0; transition: opacity 0.15s;
     }
     .add-submit:active { opacity: 0.7; }
 
-    /* ── List ── */
-    .list-area {
-      flex: 1;
-      overflow-y: auto;
-      padding: 6px 20px;
-      -webkit-overflow-scrolling: touch;
-    }
+    /* ── Scrollable body ── */
+    .list-area { flex: 1; overflow-y: auto; padding: 8px 20px; -webkit-overflow-scrolling: touch; }
+    .empty-state { text-align: center; color: var(--muted3); font-size: 11px; letter-spacing: 3px; padding: 40px 0; }
 
-    .empty-state {
-      text-align: center;
-      color: var(--muted2);
-      font-size: 11px;
-      letter-spacing: 3px;
-      padding: 40px 0;
-    }
-
+    /* ── Status view: task rows ── */
     .task-row {
-      display: flex;
-      align-items: flex-start;
-      gap: 12px;
-      padding: 11px 0;
-      border-bottom: 1px solid var(--border);
+      display: flex; align-items: flex-start; gap: 10px;
+      padding: 10px 0; border-bottom: 1px solid var(--border);
       animation: fadeIn 0.2s ease;
     }
-    @keyframes fadeIn { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }
-
-    .task-row.done { opacity: 0.3; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(-3px); } to { opacity: 1; transform: none; } }
+    .task-row.done-row { opacity: 0.35; }
 
     .checkbox {
-      width: 18px; height: 18px;
-      border: 1.5px solid var(--border2);
-      border-radius: 4px;
-      background: none;
-      cursor: pointer;
-      flex-shrink: 0;
-      margin-top: 2px;
+      width: 17px; height: 17px; border: 1.5px solid var(--border2);
+      border-radius: 4px; background: none; cursor: pointer;
+      flex-shrink: 0; margin-top: 2px;
       display: flex; align-items: center; justify-content: center;
-      transition: all 0.15s;
-      font-size: 10px;
-      color: var(--muted);
+      transition: all 0.15s; font-size: 10px; color: var(--muted);
     }
-    .task-row.done .checkbox { background: var(--border2); }
+    .task-row.done-row .checkbox { background: var(--border2); }
 
+    .task-main { flex: 1; min-width: 0; }
+    .task-text-line { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
     .task-text {
-      flex: 1;
-      font-size: 13px;
-      line-height: 1.55;
-      letter-spacing: 0.2px;
-      word-break: break-word;
-      cursor: text;
-      font-family: var(--sans);
-      font-weight: 400;
+      font-size: 13px; line-height: 1.5; font-family: var(--sans);
+      word-break: break-word; cursor: text;
     }
-    .task-row.done .task-text { text-decoration: line-through; }
+    .task-row.done-row .task-text { text-decoration: line-through; color: var(--muted2); }
 
-    .task-edit-input {
-      flex: 1;
-      background: var(--surface);
-      border: 1px solid var(--active-accent, var(--now));
-      border-radius: 4px;
-      color: var(--text);
-      font-family: var(--sans);
-      font-size: 13px;
-      padding: 3px 8px;
-      outline: none;
+    .proj-chip {
+      font-family: var(--mono); font-size: 9px; letter-spacing: 1px;
+      padding: 2px 7px; border-radius: 10px;
+      background: var(--surface2); color: var(--muted);
+      white-space: nowrap; flex-shrink: 0;
     }
 
-    .task-actions {
-      display: flex;
-      gap: 2px;
-      flex-shrink: 0;
-      align-items: flex-start;
-      margin-top: 1px;
+    .status-chip {
+      font-family: var(--mono); font-size: 9px; letter-spacing: 1px;
+      padding: 1px 6px; border-radius: 8px; flex-shrink: 0;
     }
+    .status-chip.N { background: rgba(212,255,79,0.12);  color: var(--now); }
+    .status-chip.L { background: rgba(79,195,255,0.12);  color: var(--later); }
+    .status-chip.W { background: rgba(255,140,75,0.12);  color: var(--waiting); }
 
+    /* sub-tasks in status view */
+    .subtask-list { margin-top: 4px; padding-left: 4px; }
+    .subtask-row {
+      display: flex; align-items: flex-start; gap: 8px;
+      padding: 4px 0; border-top: 1px solid var(--border);
+    }
+    .subtask-check {
+      width: 13px; height: 13px; border: 1px solid var(--border2);
+      border-radius: 3px; background: none; cursor: pointer;
+      flex-shrink: 0; margin-top: 2px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 8px; color: var(--muted);
+    }
+    .subtask-text { font-size: 12px; font-family: var(--sans); color: var(--text); line-height: 1.4; flex: 1; }
+    .subtask-row.done-sub .subtask-text { text-decoration: line-through; color: var(--muted3); }
+
+    .expand-btn {
+      background: none; border: none; color: var(--muted3);
+      font-size: 10px; cursor: pointer; padding: 2px 0; font-family: var(--mono);
+      letter-spacing: 1px;
+    }
+    .expand-btn:hover { color: var(--muted); }
+
+    /* task actions */
+    .task-actions { display: flex; gap: 2px; flex-shrink: 0; margin-top: 1px; align-items: flex-start; }
     .icon-btn {
-      background: none;
-      border: none;
-      cursor: pointer;
-      color: var(--muted2);
-      font-size: 14px;
-      padding: 2px 5px;
-      line-height: 1;
-      border-radius: 4px;
-      transition: color 0.15s;
-      font-family: var(--mono);
+      background: none; border: none; cursor: pointer;
+      color: var(--muted3); font-size: 14px; padding: 2px 5px;
+      line-height: 1; border-radius: 4px; transition: color 0.15s; font-family: var(--mono);
     }
-    .icon-btn:hover { color: var(--text); }
+    .icon-btn:hover { color: var(--muted); }
     .icon-btn.del:hover { color: var(--danger); }
 
-    /* Move popover */
     .move-wrap { position: relative; }
     .move-menu {
-      position: absolute;
-      right: 0; top: 100%;
-      background: #1A1A1A;
-      border: 1px solid var(--border2);
-      border-radius: 8px;
-      overflow: hidden;
-      z-index: 100;
-      min-width: 100px;
+      position: absolute; right: 0; top: 100%; z-index: 100;
+      background: #1A1A1A; border: 1px solid var(--border2);
+      border-radius: 8px; overflow: hidden; min-width: 110px;
       box-shadow: 0 8px 24px rgba(0,0,0,0.5);
     }
     .move-menu button {
-      display: block; width: 100%;
-      background: none; border: none;
-      font-family: var(--mono);
-      font-size: 10px; letter-spacing: 2px;
-      padding: 10px 16px;
-      cursor: pointer;
-      text-align: left;
-      text-transform: uppercase;
-      transition: background 0.1s;
+      display: block; width: 100%; background: none; border: none;
+      font-family: var(--mono); font-size: 10px; letter-spacing: 2px;
+      padding: 10px 16px; cursor: pointer; text-align: left;
+      text-transform: uppercase; transition: background 0.1s;
     }
     .move-menu button:hover { background: var(--border2); }
 
-    /* ── Done section ── */
+    /* done toggle */
     .done-toggle {
-      background: none; border: none;
-      color: var(--muted2); font-family: var(--mono);
-      font-size: 10px; letter-spacing: 3px;
-      text-transform: uppercase;
-      cursor: pointer;
-      display: flex; align-items: center; gap: 8px;
+      background: none; border: none; color: var(--muted2); font-family: var(--mono);
+      font-size: 10px; letter-spacing: 3px; text-transform: uppercase;
+      cursor: pointer; display: flex; align-items: center; gap: 8px;
       padding: 14px 0 8px;
     }
     .done-toggle:hover { color: var(--muted); }
-
     .clear-done {
-      background: none;
-      border: 1px solid var(--border2);
-      border-radius: 4px;
-      color: var(--muted);
-      font-family: var(--mono);
-      font-size: 10px;
-      letter-spacing: 2px;
-      padding: 6px 12px;
-      cursor: pointer;
-      text-transform: uppercase;
-      margin: 8px 0 16px;
-      transition: all 0.15s;
+      background: none; border: 1px solid var(--border2); border-radius: 4px;
+      color: var(--muted2); font-family: var(--mono); font-size: 10px;
+      letter-spacing: 2px; padding: 6px 12px; cursor: pointer;
+      text-transform: uppercase; margin: 8px 0 16px; transition: all 0.15s;
     }
     .clear-done:hover { border-color: var(--danger); color: var(--danger); }
 
-    /* ── Review panel ── */
-    .review-panel {
-      margin: 0 20px 0;
-      background: var(--surface);
-      border: 1px solid var(--border2);
-      border-radius: 10px;
-      overflow: hidden;
-      flex-shrink: 0;
-      display: none;
-    }
-    .review-panel.visible { display: block; }
-
-    .review-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 12px 16px;
-      border-bottom: 1px solid var(--border);
-    }
-    .review-title {
-      font-size: 10px;
-      letter-spacing: 3px;
-      color: var(--now);
-      text-transform: uppercase;
-    }
-    .review-close {
-      background: none; border: none;
-      color: var(--muted); cursor: pointer;
-      font-size: 16px; line-height: 1;
-      padding: 0 4px;
+    /* inline edit */
+    .inline-edit {
+      flex: 1; background: var(--surface); border: 1px solid var(--now);
+      border-radius: 4px; color: var(--text); font-family: var(--sans);
+      font-size: 13px; padding: 3px 8px; outline: none; width: 100%;
     }
 
-    .review-body {
-      padding: 14px 16px;
-      max-height: 280px;
-      overflow-y: auto;
-      font-family: var(--sans);
-      font-size: 13px;
-      line-height: 1.6;
-      color: var(--text);
-      white-space: pre-wrap;
+    /* ── Project view ── */
+    .proj-view-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 12px 20px; border-bottom: 1px solid var(--border); flex-shrink: 0;
     }
+    .new-proj-btn {
+      background: none; border: 1px solid var(--border2); border-radius: 6px;
+      color: var(--muted); font-family: var(--mono); font-size: 10px;
+      letter-spacing: 2px; text-transform: uppercase; padding: 6px 14px;
+      cursor: pointer; transition: all 0.15s;
+    }
+    .new-proj-btn:hover { border-color: var(--now); color: var(--now); }
 
-    .suggestion-item {
-      display: flex;
-      align-items: flex-start;
-      gap: 10px;
-      padding: 8px 0;
-      border-bottom: 1px solid var(--border);
+    .proj-card {
+      border: 1px solid var(--border); border-radius: 10px;
+      margin-bottom: 14px; overflow: hidden; animation: fadeIn 0.2s ease;
+    }
+    .proj-card-header {
+      display: flex; align-items: center; gap: 10px;
+      padding: 12px 16px; background: var(--surface);
+      border-bottom: 1px solid var(--border); cursor: pointer;
+      user-select: none;
+    }
+    .proj-emoji { font-size: 18px; flex-shrink: 0; }
+    .proj-info { flex: 1; min-width: 0; }
+    .proj-name { font-size: 13px; font-family: var(--sans); font-weight: 500; }
+    .proj-meta { font-size: 10px; color: var(--muted2); letter-spacing: 1px; margin-top: 2px; }
+    .proj-collapse-btn {
+      background: none; border: none; color: var(--muted3);
+      font-size: 12px; cursor: pointer; padding: 4px;
+    }
+    .proj-edit-btn {
+      background: none; border: none; color: var(--muted3);
+      font-size: 12px; cursor: pointer; padding: 4px;
+      transition: color 0.15s;
+    }
+    .proj-edit-btn:hover { color: var(--muted); }
+
+    .proj-body { padding: 8px 16px 12px; }
+
+    /* project task rows */
+    .ptask-row {
+      display: flex; align-items: flex-start; gap: 8px;
+      padding: 7px 0; border-bottom: 1px solid var(--border);
       animation: fadeIn 0.2s ease;
     }
-    .suggestion-item:last-child { border-bottom: none; }
+    .ptask-row:last-child { border-bottom: none; }
+    .ptask-row.done-row { opacity: 0.4; }
 
-    .suggestion-text { flex: 1; font-size: 13px; font-family: var(--sans); line-height: 1.5; }
-    .suggestion-tab {
-      font-family: var(--mono);
-      font-size: 9px;
-      letter-spacing: 2px;
-      padding: 2px 7px;
-      border-radius: 10px;
-      flex-shrink: 0;
-      margin-top: 2px;
-      text-transform: uppercase;
+    .ptask-expand {
+      background: none; border: none; color: var(--muted3);
+      font-size: 11px; cursor: pointer; padding: 2px 2px; flex-shrink: 0; margin-top: 1px;
+      width: 16px; text-align: center;
     }
-    .suggestion-tab.Now     { background: rgba(212,255,79,0.15);  color: var(--now); }
-    .suggestion-tab.Later   { background: rgba(79,195,255,0.15);  color: var(--later); }
-    .suggestion-tab.Waiting { background: rgba(255,140,75,0.15);  color: var(--waiting); }
+    .ptask-expand:hover { color: var(--muted); }
 
-    .add-suggestion {
-      background: none; border: 1px solid var(--border2);
-      border-radius: 4px; color: var(--muted);
-      font-family: var(--mono); font-size: 10px;
-      letter-spacing: 1px; padding: 3px 8px;
-      cursor: pointer; flex-shrink: 0; margin-top: 2px;
-      transition: all 0.15s;
-    }
-    .add-suggestion:hover { border-color: var(--now); color: var(--now); }
-    .add-suggestion.added { border-color: var(--muted2); color: var(--muted2); cursor: default; }
-
-    .review-snapshot {
-      padding: 0 16px 14px;
-      border-top: 1px solid var(--border);
-      margin-top: 4px;
-    }
-    .snapshot-label {
-      font-size: 9px; letter-spacing: 3px; color: var(--muted);
-      text-transform: uppercase; padding: 12px 0 8px;
-    }
-    .snapshot-row {
-      display: flex; justify-content: space-between;
-      font-size: 12px; padding: 3px 0; color: var(--muted);
-    }
-    .snapshot-row span:first-child { font-family: var(--mono); letter-spacing: 1px; }
-
-    /* ── API key prompt ── */
-    .key-panel {
-      position: fixed; inset: 0;
-      background: rgba(0,0,0,0.85);
+    .ptask-check {
+      width: 16px; height: 16px; border: 1.5px solid var(--border2);
+      border-radius: 3px; background: none; cursor: pointer; flex-shrink: 0; margin-top: 2px;
       display: flex; align-items: center; justify-content: center;
-      z-index: 200;
-      padding: 24px;
+      font-size: 9px; color: var(--muted);
     }
-    .key-card {
-      background: var(--surface);
-      border: 1px solid var(--border2);
-      border-radius: 12px;
-      padding: 24px;
-      max-width: 360px;
-      width: 100%;
+    .ptask-row.done-row .ptask-check { background: var(--border2); }
+
+    .ptask-main { flex: 1; min-width: 0; }
+    .ptask-text { font-size: 13px; font-family: var(--sans); line-height: 1.5; cursor: text; word-break: break-word; }
+    .ptask-row.done-row .ptask-text { text-decoration: line-through; color: var(--muted2); }
+
+    .ptask-status {
+      font-family: var(--mono); font-size: 9px; letter-spacing: 1px;
+      padding: 2px 6px; border-radius: 8px; flex-shrink: 0; margin-top: 3px;
+      cursor: pointer; transition: all 0.15s;
     }
+    .ptask-status.N { background: rgba(212,255,79,0.12);  color: var(--now); }
+    .ptask-status.L { background: rgba(79,195,255,0.12);  color: var(--later); }
+    .ptask-status.W { background: rgba(255,140,75,0.12);  color: var(--waiting); }
+    .ptask-status.none { background: var(--surface2); color: var(--muted3); }
+
+    .ptask-del {
+      background: none; border: none; color: var(--muted3);
+      font-size: 14px; cursor: pointer; padding: 1px 4px;
+      line-height: 1; transition: color 0.15s; flex-shrink: 0; margin-top: 1px;
+    }
+    .ptask-del:hover { color: var(--danger); }
+
+    /* sub-task indent in project view */
+    .psubtask-list { padding-left: 24px; }
+    .psubtask-row {
+      display: flex; align-items: flex-start; gap: 8px;
+      padding: 5px 0; border-top: 1px solid var(--border);
+    }
+    .psubtask-check {
+      width: 13px; height: 13px; border: 1px solid var(--border2);
+      border-radius: 3px; background: none; cursor: pointer; flex-shrink: 0; margin-top: 2px;
+      display: flex; align-items: center; justify-content: center; font-size: 8px; color: var(--muted);
+    }
+    .psubtask-text { font-size: 12px; font-family: var(--sans); color: var(--text); flex: 1; line-height: 1.4; cursor: text; }
+    .psubtask-row.done-sub .psubtask-text { text-decoration: line-through; color: var(--muted3); }
+    .psubtask-status {
+      font-family: var(--mono); font-size: 8px; letter-spacing: 1px;
+      padding: 1px 5px; border-radius: 6px; flex-shrink: 0; margin-top: 2px; cursor: pointer;
+    }
+    .psubtask-status.N { background: rgba(212,255,79,0.12); color: var(--now); }
+    .psubtask-status.L { background: rgba(79,195,255,0.12); color: var(--later); }
+    .psubtask-status.W { background: rgba(255,140,75,0.12); color: var(--waiting); }
+    .psubtask-status.none { background: var(--surface2); color: var(--muted3); }
+    .psubtask-del {
+      background: none; border: none; color: var(--muted3);
+      font-size: 12px; cursor: pointer; padding: 1px 3px; transition: color 0.15s;
+    }
+    .psubtask-del:hover { color: var(--danger); }
+
+    /* add task input in project */
+    .add-ptask-row {
+      display: flex; gap: 8px; margin-top: 8px; align-items: center;
+    }
+    .add-ptask-input {
+      flex: 1; background: var(--surface2); border: 1px solid var(--border2);
+      border-radius: 6px; color: var(--text); font-family: var(--sans);
+      font-size: 13px; padding: 8px 12px; outline: none; transition: border-color 0.15s;
+    }
+    .add-ptask-input::placeholder { color: var(--muted3); }
+    .add-ptask-input:focus { border-color: var(--border2); }
+    .add-ptask-btn {
+      background: var(--surface2); border: 1px solid var(--border2);
+      border-radius: 6px; color: var(--muted); font-size: 16px;
+      width: 34px; height: 34px; cursor: pointer; flex-shrink: 0;
+      transition: all 0.15s; display: flex; align-items: center; justify-content: center;
+    }
+    .add-ptask-btn:hover { border-color: var(--now); color: var(--now); }
+
+    .hint-text { font-size: 10px; color: var(--muted3); letter-spacing: 1px; margin-top: 4px; font-family: var(--mono); }
+
+    /* ── Review panel ── */
+    .review-panel {
+      margin: 0 20px 8px; background: var(--surface);
+      border: 1px solid var(--border2); border-radius: 10px;
+      overflow: hidden; flex-shrink: 0; display: none;
+    }
+    .review-panel.visible { display: block; }
+    .review-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 10px 16px; border-bottom: 1px solid var(--border);
+    }
+    .review-title { font-size: 10px; letter-spacing: 3px; color: var(--now); text-transform: uppercase; }
+    .review-close { background: none; border: none; color: var(--muted); cursor: pointer; font-size: 16px; line-height: 1; padding: 0 4px; }
+    .review-body {
+      padding: 14px 16px; max-height: 260px; overflow-y: auto;
+      font-family: var(--sans); font-size: 13px; line-height: 1.6; color: var(--text);
+    }
+    .suggestion-item {
+      display: flex; align-items: flex-start; gap: 10px;
+      padding: 7px 0; border-bottom: 1px solid var(--border); animation: fadeIn 0.2s ease;
+    }
+    .suggestion-item:last-child { border-bottom: none; }
+    .suggestion-text { flex: 1; font-size: 13px; font-family: var(--sans); line-height: 1.5; }
+    .sug-tab { font-family: var(--mono); font-size: 9px; letter-spacing: 1px; padding: 2px 6px; border-radius: 8px; flex-shrink: 0; margin-top: 2px; text-transform: uppercase; }
+    .sug-tab.Now     { background: rgba(212,255,79,0.12); color: var(--now); }
+    .sug-tab.Later   { background: rgba(79,195,255,0.12); color: var(--later); }
+    .sug-tab.Waiting { background: rgba(255,140,75,0.12); color: var(--waiting); }
+    .add-sug { background: none; border: 1px solid var(--border2); border-radius: 4px; color: var(--muted); font-family: var(--mono); font-size: 10px; letter-spacing: 1px; padding: 3px 8px; cursor: pointer; flex-shrink: 0; margin-top: 2px; transition: all 0.15s; }
+    .add-sug:hover { border-color: var(--now); color: var(--now); }
+    .add-sug.added { border-color: var(--muted3); color: var(--muted3); cursor: default; }
+
+    /* ── Modal (project editor) ── */
+    .modal-overlay {
+      position: fixed; inset: 0; background: rgba(0,0,0,0.8);
+      display: flex; align-items: center; justify-content: center;
+      z-index: 200; padding: 24px;
+    }
+    .modal-card {
+      background: var(--surface); border: 1px solid var(--border2);
+      border-radius: 14px; padding: 24px; max-width: 380px; width: 100%;
+    }
+    .modal-title { font-size: 11px; letter-spacing: 3px; color: var(--now); margin-bottom: 18px; text-transform: uppercase; }
+    .modal-label { font-size: 10px; letter-spacing: 2px; color: var(--muted2); text-transform: uppercase; margin-bottom: 6px; display: block; }
+    .modal-input {
+      width: 100%; background: var(--bg); border: 1px solid var(--border2);
+      border-radius: 6px; color: var(--text); font-family: var(--sans);
+      font-size: 14px; padding: 10px 12px; outline: none; margin-bottom: 14px;
+    }
+    .modal-input:focus { border-color: var(--now); }
+    .modal-row { display: flex; gap: 10px; }
+    .modal-row .modal-input { flex: 1; }
+    .modal-actions { display: flex; gap: 10px; margin-top: 4px; }
+    .modal-save { flex: 1; background: var(--now); border: none; border-radius: 8px; color: #0A0A0A; font-family: var(--mono); font-size: 11px; letter-spacing: 2px; padding: 12px; cursor: pointer; text-transform: uppercase; font-weight: 600; }
+    .modal-cancel { background: none; border: 1px solid var(--border2); border-radius: 8px; color: var(--muted); font-family: var(--mono); font-size: 11px; letter-spacing: 2px; padding: 12px 18px; cursor: pointer; text-transform: uppercase; }
+    .modal-delete { background: none; border: 1px solid var(--border2); border-radius: 8px; color: var(--danger); font-family: var(--mono); font-size: 11px; letter-spacing: 1px; padding: 12px 14px; cursor: pointer; transition: all 0.15s; }
+    .modal-delete:hover { background: rgba(255,75,75,0.1); }
+
+    /* API key modal */
+    .key-panel { position: fixed; inset: 0; background: rgba(0,0,0,0.85); display: flex; align-items: center; justify-content: center; z-index: 300; padding: 24px; }
+    .key-card { background: var(--surface); border: 1px solid var(--border2); border-radius: 12px; padding: 24px; max-width: 360px; width: 100%; }
     .key-title { font-size: 11px; letter-spacing: 3px; color: var(--now); margin-bottom: 10px; text-transform: uppercase; }
     .key-desc { font-family: var(--sans); font-size: 13px; color: var(--muted); line-height: 1.6; margin-bottom: 16px; }
-    .key-input {
-      width: 100%; background: var(--bg);
-      border: 1px solid var(--border2); border-radius: 6px;
-      color: var(--text); font-family: var(--mono);
-      font-size: 12px; padding: 10px 12px; outline: none;
-      margin-bottom: 12px;
-    }
+    .key-input { width: 100%; background: var(--bg); border: 1px solid var(--border2); border-radius: 6px; color: var(--text); font-family: var(--mono); font-size: 12px; padding: 10px 12px; outline: none; margin-bottom: 12px; }
     .key-input:focus { border-color: var(--now); }
-    .key-save {
-      width: 100%; background: var(--now);
-      border: none; border-radius: 6px;
-      color: #0A0A0A; font-family: var(--mono);
-      font-size: 11px; letter-spacing: 2px;
-      padding: 12px; cursor: pointer;
-      text-transform: uppercase; font-weight: 600;
-    }
+    .key-save { width: 100%; background: var(--now); border: none; border-radius: 6px; color: #0A0A0A; font-family: var(--mono); font-size: 11px; letter-spacing: 2px; padding: 12px; cursor: pointer; text-transform: uppercase; font-weight: 600; }
 
-    .spacer { height: 24px; }
+    .spacer { height: 32px; }
   </style>
 </head>
 <body>
 <div id="app">
-  <div class="header">
-    <div class="header-top">
+  <!-- Top bar -->
+  <div class="topbar">
+    <div class="topbar-row">
       <span class="wordmark">Tasks</span>
-      <button class="review-btn" id="reviewBtn" onclick="startReview()">
-        <div class="spinner"></div>
-        <span class="btn-label">☀ Morning Review</span>
-      </button>
+      <div style="display:flex;gap:10px;align-items:center;">
+        <button class="review-btn" id="reviewBtn" onclick="startReview()">
+          <div class="spinner"></div>
+          <span class="btn-label">☀ Review</span>
+        </button>
+        <div class="view-toggle">
+          <button class="view-btn active" id="vbtnStatus" onclick="setView('status')">Status</button>
+          <button class="view-btn" id="vbtnProject" onclick="setView('project')">Projects</button>
+        </div>
+      </div>
     </div>
-    <div class="tabs" id="tabs"></div>
+    <!-- Status tabs (hidden in project view) -->
+    <div class="tabs" id="statusTabs">
+      <button class="tab active" data-tab="Now" onclick="setTab('Now')">Now<span class="badge" id="badge-Now"></span></button>
+      <button class="tab" data-tab="Later" onclick="setTab('Later')">Later<span class="badge" id="badge-Later"></span></button>
+      <button class="tab" data-tab="Waiting" onclick="setTab('Waiting')">Waiting<span class="badge" id="badge-Waiting"></span></button>
+    </div>
   </div>
 
   <!-- Review panel -->
@@ -482,225 +474,532 @@
     <div class="review-body" id="reviewBody"></div>
   </div>
 
-  <div class="add-row">
-    <input class="add-input" id="addInput" placeholder="Add task…" autocomplete="off" autocorrect="off" />
+  <!-- Add row (status view only) -->
+  <div class="add-row" id="addRow">
+    <input class="add-input" id="addInput" placeholder="Add task… (optional: type #N #L #W)" autocomplete="off" autocorrect="off" />
     <button class="add-submit" id="addSubmit">+</button>
   </div>
 
+  <!-- Project view header -->
+  <div class="proj-view-header" id="projHeader" style="display:none">
+    <span style="font-size:10px;letter-spacing:3px;color:var(--muted2);text-transform:uppercase;">Projects</span>
+    <button class="new-proj-btn" onclick="openNewProject()">+ New Project</button>
+  </div>
+
+  <!-- Main scroll area -->
   <div class="list-area" id="listArea"></div>
 </div>
 
-<!-- API Key modal -->
+<!-- Project editor modal -->
+<div class="modal-overlay" id="projModal" style="display:none" onclick="handleModalOverlay(event)">
+  <div class="modal-card" onclick="event.stopPropagation()">
+    <div class="modal-title" id="modalTitle">New Project</div>
+    <label class="modal-label">Project name</label>
+    <input class="modal-input" id="projNameInput" placeholder="e.g. Strix Varia build" />
+    <div class="modal-row">
+      <div style="flex:1">
+        <label class="modal-label">Emoji (optional)</label>
+        <input class="modal-input" id="projEmojiInput" placeholder="🚲" maxlength="4" />
+      </div>
+      <div style="flex:1">
+        <label class="modal-label">Short label</label>
+        <input class="modal-input" id="projLabelInput" placeholder="bike" maxlength="10" />
+      </div>
+    </div>
+    <label class="modal-label">Target date (optional)</label>
+    <input class="modal-input" id="projDateInput" type="date" />
+    <div class="modal-actions">
+      <button class="modal-cancel" onclick="closeModal()">Cancel</button>
+      <button class="modal-delete" id="modalDeleteBtn" onclick="deleteProject()" style="display:none">Delete</button>
+      <button class="modal-save" onclick="saveProject()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- API key modal -->
 <div class="key-panel" id="keyPanel" style="display:none">
   <div class="key-card">
     <div class="key-title">Anthropic API Key</div>
-    <div class="key-desc">Enter your Anthropic API key to enable Morning Review. It's stored only in this browser.</div>
+    <div class="key-desc">Enter your Anthropic API key to enable Morning Review. Stored only in this browser.</div>
     <input class="key-input" id="keyInput" type="password" placeholder="sk-ant-…" />
     <button class="key-save" onclick="saveKey()">Save Key</button>
   </div>
 </div>
 
 <script>
-// ── State ──────────────────────────────────────────────────────────────
-const TABS = ['Now', 'Later', 'Waiting'];
+// ── Data model ─────────────────────────────────────────────────────────
+// projects: [{ id, name, emoji, label, targetDate, collapsed }]
+// tasks: [{ id, projectId, parentId, text, status('N'|'L'|'W'|null), done, doneAt, createdAt }]
+
+const STATUS_TABS = ['Now','Later','Waiting'];
+const STATUS_MAP = { N: 'Now', L: 'Later', W: 'Waiting' };
+const STATUS_KEY = { Now: 'N', Later: 'L', Waiting: 'W' };
 const ACCENTS = { Now: '#D4FF4F', Later: '#4FC3FF', Waiting: '#FF8C4B' };
-let state = { lists: { Now: [], Later: [], Waiting: [] }, activeTab: 'Now', showDone: false };
-let reviewOpen = false;
-let moveOpenId = null;
-let editingId = null;
+const MISC_PROJECT_ID = '__misc__';
 
-function genId() { return Math.random().toString(36).slice(2, 10); }
+let data = {
+  projects: [{ id: MISC_PROJECT_ID, name: 'Daily / Misc', emoji: '📋', label: 'misc', targetDate: null, collapsed: false }],
+  tasks: []
+};
 
-function load() {
+let ui = {
+  view: 'status',         // 'status' | 'project'
+  activeTab: 'Now',
+  showDone: false,
+  expandedTasks: {},      // taskId -> bool (subtasks shown)
+  editingTask: null,      // { id, field: 'text' }
+  moveOpenId: null,
+  editingProject: null,   // project id being edited in modal
+  projExpanded: {}        // projectId -> bool (card open)
+};
+
+function genId() { return Date.now().toString(36) + Math.random().toString(36).slice(2,6); }
+
+// ── Persistence ────────────────────────────────────────────────────────
+function loadData() {
   try {
-    const saved = localStorage.getItem('swtasks-v1');
-    if (saved) state.lists = JSON.parse(saved);
+    const s = localStorage.getItem('swtasks-v2');
+    if (s) data = JSON.parse(s);
+    // ensure misc project exists
+    if (!data.projects.find(p => p.id === MISC_PROJECT_ID)) {
+      data.projects.unshift({ id: MISC_PROJECT_ID, name: 'Daily / Misc', emoji: '📋', label: 'misc', targetDate: null, collapsed: false });
+    }
   } catch(e) {}
 }
-
-function save() {
-  try { localStorage.setItem('swtasks-v1', JSON.stringify(state.lists)); } catch(e) {}
+function saveData() {
+  try { localStorage.setItem('swtasks-v2', JSON.stringify(data)); } catch(e) {}
 }
 
 // ── Render ─────────────────────────────────────────────────────────────
 function render() {
-  const accent = ACCENTS[state.activeTab];
+  const accent = ACCENTS[ui.activeTab] || ACCENTS.Now;
   document.documentElement.style.setProperty('--active-accent', accent);
 
-  renderTabs();
-  renderList();
+  // View toggle buttons
+  document.getElementById('vbtnStatus').classList.toggle('active', ui.view === 'status');
+  document.getElementById('vbtnProject').classList.toggle('active', ui.view === 'project');
+
+  // Show/hide sections
+  document.getElementById('statusTabs').style.display = ui.view === 'status' ? '' : 'none';
+  document.getElementById('addRow').style.display = ui.view === 'status' ? '' : 'none';
+  document.getElementById('projHeader').style.display = ui.view === 'project' ? '' : 'none';
+
+  // Badges
+  STATUS_TABS.forEach(tab => {
+    const key = STATUS_KEY[tab];
+    const count = data.tasks.filter(t => !t.parentId && !t.done && t.status === key).length;
+    const el = document.getElementById('badge-' + tab);
+    if (el) el.textContent = count > 0 ? count : '';
+  });
+
+  // Tab active state
+  document.querySelectorAll('.tab').forEach(t => {
+    t.classList.toggle('active', t.dataset.tab === ui.activeTab);
+  });
+
+  if (ui.view === 'status') renderStatusView();
+  else renderProjectView();
 }
 
-function renderTabs() {
-  const el = document.getElementById('tabs');
-  el.innerHTML = TABS.map(tab => {
-    const count = state.lists[tab].filter(i => !i.done).length;
-    const active = tab === state.activeTab ? 'active' : '';
-    const badge = count > 0 ? `<span class="badge">${count}</span>` : '';
-    return `<button class="tab ${active}" data-tab="${tab}" onclick="setTab('${tab}')">${tab}${badge}</button>`;
-  }).join('');
-}
-
-function renderList() {
+// ── Status view ────────────────────────────────────────────────────────
+function renderStatusView() {
+  const key = STATUS_KEY[ui.activeTab];
   const el = document.getElementById('listArea');
-  const items = state.lists[state.activeTab] || [];
-  const open = items.filter(i => !i.done);
-  const done = items.filter(i => i.done);
+  const topTasks = data.tasks.filter(t => !t.parentId && t.status === key);
+  const open = topTasks.filter(t => !t.done);
+  const done = topTasks.filter(t => t.done);
 
   let html = '';
-
   if (open.length === 0 && done.length === 0) {
     html = '<div class="empty-state">— CLEAR —</div>';
   }
 
-  open.forEach(item => { html += renderTask(item, false); });
+  open.forEach(t => { html += renderStatusTask(t); });
 
   if (done.length > 0) {
-    const arrow = state.showDone ? '▾' : '▸';
-    html += `<button class="done-toggle" onclick="toggleDone()">${arrow} Done (${done.length})</button>`;
-    if (state.showDone) {
-      done.forEach(item => { html += renderTask(item, true); });
+    const arrow = ui.showDone ? '▾' : '▸';
+    html += `<button class="done-toggle" onclick="toggleShowDone()">${arrow} Done (${done.length})</button>`;
+    if (ui.showDone) {
+      done.forEach(t => { html += renderStatusTask(t); });
       html += `<button class="clear-done" onclick="clearDone()">Clear done</button>`;
     }
   }
-
   html += '<div class="spacer"></div>';
   el.innerHTML = html;
 
-  // Restore editing focus
-  if (editingId) {
-    const inp = document.getElementById('edit-' + editingId);
+  // Re-focus editing input
+  if (ui.editingTask) {
+    const inp = document.getElementById('edit-' + ui.editingTask.id);
     if (inp) { inp.focus(); inp.setSelectionRange(inp.value.length, inp.value.length); }
   }
 }
 
-function renderTask(item, isDone) {
-  const otherTabs = TABS.filter(t => t !== state.activeTab);
-  const doneClass = isDone ? 'done' : '';
-  const accent = ACCENTS[state.activeTab];
+function renderStatusTask(task) {
+  const proj = data.projects.find(p => p.id === task.projectId);
+  const projChip = proj && proj.id !== MISC_PROJECT_ID
+    ? `<span class="proj-chip">${proj.emoji || ''} ${proj.label || proj.name}</span>` : '';
+
+  const subtasks = data.tasks.filter(t => t.parentId === task.id);
+  const expanded = ui.expandedTasks[task.id];
 
   let textPart;
-  if (editingId === item.id) {
-    textPart = `<input class="task-edit-input" id="edit-${item.id}" value="${escHtml(item.text)}"
-      onkeydown="editKeydown(event,'${item.id}')" onblur="saveEdit('${item.id}')" />`;
+  if (ui.editingTask && ui.editingTask.id === task.id) {
+    textPart = `<input class="inline-edit" id="edit-${task.id}" value="${esc(task.text)}"
+      onkeydown="editKeydown(event,'${task.id}')" onblur="saveEdit('${task.id}')" />`;
   } else {
-    textPart = `<span class="task-text" ondblclick="startEdit('${item.id}')">${escHtml(item.text)}</span>`;
+    textPart = `<span class="task-text" ondblclick="startEdit('${task.id}')">${esc(task.text)}</span>`;
   }
 
-  let actions = '';
-  if (!isDone && editingId !== item.id) {
-    const moveMenu = moveOpenId === item.id ? `
-      <div class="move-menu">
-        ${otherTabs.map(t => `<button style="color:${ACCENTS[t]}" onclick="moveItem('${item.id}','${t}')">${t}</button>`).join('')}
-      </div>` : '';
-    actions = `
+  const doneClass = task.done ? 'done-row' : '';
+  const checkMark = task.done ? '✓' : '';
+
+  // subtask expand toggle
+  let expandBtn = '';
+  if (subtasks.length > 0) {
+    const doneCount = subtasks.filter(s => s.done).length;
+    expandBtn = `<button class="expand-btn" onclick="toggleExpand('${task.id}')">
+      ${expanded ? '▾' : '▸'} ${doneCount}/${subtasks.length}
+    </button>`;
+  }
+
+  // move menu
+  const otherStatuses = STATUS_TABS.filter(t => t !== ui.activeTab);
+  const moveMenu = ui.moveOpenId === task.id ? `
+    <div class="move-menu">
+      ${otherStatuses.map(s => `<button style="color:${ACCENTS[s]}" onclick="moveTask('${task.id}','${s}')">${s}</button>`).join('')}
+    </div>` : '';
+
+  let subtaskHtml = '';
+  if (expanded && subtasks.length > 0) {
+    subtaskHtml = `<div class="subtask-list">`;
+    subtasks.forEach(s => {
+      const sKey = s.status || task.status;
+      const chip = sKey !== task.status
+        ? `<span class="status-chip ${sKey || ''}">${sKey || '?'}</span>` : '';
+      subtaskHtml += `
+        <div class="subtask-row ${s.done ? 'done-sub' : ''}">
+          <button class="subtask-check" onclick="toggleCheck('${s.id}')">${s.done ? '✓' : ''}</button>
+          <span class="subtask-text">${esc(s.text)}</span>
+          ${chip}
+        </div>`;
+    });
+    subtaskHtml += `</div>`;
+  }
+
+  return `
+    <div class="task-row ${doneClass}" id="stask-${task.id}">
+      <button class="checkbox" onclick="toggleCheck('${task.id}')">${checkMark}</button>
+      <div class="task-main">
+        <div class="task-text-line">
+          ${textPart}
+          ${projChip}
+        </div>
+        ${expandBtn}
+        ${subtaskHtml}
+      </div>
+      ${!task.done && !(ui.editingTask && ui.editingTask.id === task.id) ? `
       <div class="task-actions">
         <div class="move-wrap">
-          <button class="icon-btn" onclick="toggleMove('${item.id}',event)" title="Move">↗</button>
+          <button class="icon-btn" onclick="toggleMove('${task.id}',event)" title="Move">↗</button>
           ${moveMenu}
         </div>
-        <button class="icon-btn del" onclick="deleteItem('${item.id}')" title="Delete">×</button>
-      </div>`;
-  }
-
-  const check = isDone ? '✓' : '';
-  return `
-    <div class="task-row ${doneClass}" id="task-${item.id}">
-      <button class="checkbox" onclick="toggleCheck('${item.id}')">${check}</button>
-      ${textPart}
-      ${actions}
+        <button class="icon-btn del" onclick="deleteTask('${task.id}')">×</button>
+      </div>` : ''}
     </div>`;
 }
 
-function escHtml(s) {
-  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+// ── Project view ───────────────────────────────────────────────────────
+function renderProjectView() {
+  const el = document.getElementById('listArea');
+  let html = '';
+
+  data.projects.forEach(proj => {
+    const projTasks = data.tasks.filter(t => t.projectId === proj.id && !t.parentId);
+    const openCount = projTasks.filter(t => !t.done).length;
+    const collapsed = ui.projExpanded[proj.id] === false;
+
+    const dateStr = proj.targetDate
+      ? `Due ${formatDate(proj.targetDate)}`
+      : proj.id === MISC_PROJECT_ID ? 'ongoing' : 'indefinite';
+
+    const editBtn = `<button class="proj-edit-btn" onclick="openEditProject('${proj.id}',event)">✎</button>`;
+    const colBtn = `<button class="proj-collapse-btn" onclick="toggleProjCollapse('${proj.id}')">${collapsed ? '▸' : '▾'}</button>`;
+
+    html += `
+      <div class="proj-card" id="pcard-${proj.id}">
+        <div class="proj-card-header" onclick="toggleProjCollapse('${proj.id}')">
+          <span class="proj-emoji">${proj.emoji || '📁'}</span>
+          <div class="proj-info">
+            <div class="proj-name">${esc(proj.name)}</div>
+            <div class="proj-meta">${dateStr} · ${openCount} open</div>
+          </div>
+          ${proj.id !== MISC_PROJECT_ID ? editBtn : ''}
+          ${colBtn}
+        </div>`;
+
+    if (!collapsed) {
+      html += `<div class="proj-body">`;
+      projTasks.forEach(t => { html += renderProjTask(t, proj); });
+
+      // Add task input
+      html += `
+        <div class="add-ptask-row">
+          <input class="add-ptask-input" id="pti-${proj.id}" placeholder="Add task… #N #L #W" autocomplete="off" autocorrect="off"
+            onkeydown="if(event.key==='Enter')addProjTask('${proj.id}')" />
+          <button class="add-ptask-btn" onclick="addProjTask('${proj.id}')">+</button>
+        </div>
+        <div class="hint-text">#N = Now · #L = Later · #W = Waiting</div>
+      `;
+      html += `</div>`;
+    }
+    html += `</div>`;
+  });
+
+  html += '<div class="spacer"></div>';
+  el.innerHTML = html;
+
+  // Re-focus
+  if (ui.editingTask) {
+    const inp = document.getElementById('pedit-' + ui.editingTask.id);
+    if (inp) { inp.focus(); inp.setSelectionRange(inp.value.length, inp.value.length); }
+  }
+}
+
+function renderProjTask(task, proj) {
+  const subtasks = data.tasks.filter(t => t.parentId === task.id);
+  const expanded = ui.expandedTasks[task.id];
+  const doneClass = task.done ? 'done-row' : '';
+  const sKey = task.status || 'none';
+  const statusLabel = task.status || '–';
+
+  let textPart;
+  if (ui.editingTask && ui.editingTask.id === task.id) {
+    textPart = `<input class="inline-edit" id="pedit-${task.id}" value="${esc(task.text)}"
+      onkeydown="projEditKeydown(event,'${task.id}')" onblur="saveEdit('${task.id}')" />`;
+  } else {
+    textPart = `<span class="ptask-text" ondblclick="startEdit('${task.id}')">${esc(task.text)}</span>`;
+  }
+
+  const hasExpand = subtasks.length > 0;
+  const expandBtn = hasExpand
+    ? `<button class="ptask-expand" onclick="toggleExpand('${task.id}')">${expanded ? '▾' : '▸'}</button>`
+    : `<span style="width:16px;flex-shrink:0"></span>`;
+
+  let subtaskHtml = '';
+  if (expanded) {
+    subtaskHtml = `<div class="psubtask-list">`;
+    subtasks.forEach(s => {
+      const ssKey = s.status || task.status || 'none';
+      subtaskHtml += `
+        <div class="psubtask-row ${s.done ? 'done-sub' : ''}">
+          <button class="psubtask-check" onclick="toggleCheck('${s.id}')">${s.done ? '✓' : ''}</button>
+          <span class="psubtask-text" ondblclick="startEdit('${s.id}')">${esc(s.text)}</span>
+          <button class="psubtask-status ${ssKey}" onclick="cycleStatus('${s.id}','${task.id}')">${s.status || '–'}</button>
+          <button class="psubtask-del" onclick="deleteTask('${s.id}')">×</button>
+        </div>`;
+    });
+    // add subtask input
+    subtaskHtml += `
+      <div style="display:flex;gap:6px;padding:6px 0 2px;">
+        <input class="add-ptask-input" id="sti-${task.id}" placeholder="Add sub-task…" autocomplete="off"
+          style="font-size:12px;padding:6px 10px;"
+          onkeydown="if(event.key==='Enter')addSubtask('${task.id}','${proj.id}')" />
+        <button class="add-ptask-btn" style="width:28px;height:28px;font-size:14px;" onclick="addSubtask('${task.id}','${proj.id}')">+</button>
+      </div>`;
+    subtaskHtml += `</div>`;
+  }
+
+  return `
+    <div class="ptask-row ${doneClass}" id="ptask-${task.id}">
+      ${expandBtn}
+      <button class="ptask-check" onclick="toggleCheck('${task.id}')">${task.done ? '✓' : ''}</button>
+      <div class="ptask-main">
+        ${textPart}
+        ${subtaskHtml}
+      </div>
+      <button class="ptask-status ${sKey}" onclick="cycleStatus('${task.id}',null)">${statusLabel}</button>
+      <button class="ptask-del" onclick="deleteTask('${task.id}')">×</button>
+    </div>`;
 }
 
 // ── Actions ────────────────────────────────────────────────────────────
-function setTab(tab) {
-  state.activeTab = tab;
-  state.showDone = false;
-  editingId = null;
-  moveOpenId = null;
-  render();
+function setView(v) { ui.view = v; ui.editingTask = null; render(); }
+function setTab(t) { ui.activeTab = t; ui.showDone = false; ui.editingTask = null; ui.moveOpenId = null; render(); }
+function toggleShowDone() { ui.showDone = !ui.showDone; render(); }
+function toggleExpand(id) { ui.expandedTasks[id] = !ui.expandedTasks[id]; render(); }
+function toggleProjCollapse(id) { ui.projExpanded[id] = !(ui.projExpanded[id] !== false); render(); }
+
+function parseStatus(text) {
+  const m = text.match(/#([NLWnlw])\b/);
+  if (!m) return { text: text.trim(), status: null };
+  return { text: text.replace(/#[NLWnlw]\b/, '').trim(), status: m[1].toUpperCase() };
 }
 
-function addItem() {
+// Add task from status view
+function addTask() {
   const inp = document.getElementById('addInput');
-  const text = inp.value.trim();
-  if (!text) return;
-  state.lists[state.activeTab].push({ id: genId(), text, done: false, createdAt: Date.now() });
+  const raw = inp.value.trim();
+  if (!raw) return;
+  const { text, status } = parseStatus(raw);
+  const s = status || STATUS_KEY[ui.activeTab];
+  data.tasks.push({ id: genId(), projectId: MISC_PROJECT_ID, parentId: null, text, status: s, done: false, createdAt: Date.now() });
   inp.value = '';
-  save();
-  render();
+  saveData(); render();
   inp.focus();
 }
 
+// Add task from project view
+function addProjTask(projId) {
+  const inp = document.getElementById('pti-' + projId);
+  if (!inp) return;
+  const raw = inp.value.trim();
+  if (!raw) return;
+  const { text, status } = parseStatus(raw);
+  data.tasks.push({ id: genId(), projectId: projId, parentId: null, text, status: status || 'L', done: false, createdAt: Date.now() });
+  inp.value = '';
+  saveData(); render();
+  const newInp = document.getElementById('pti-' + projId);
+  if (newInp) newInp.focus();
+}
+
+function addSubtask(parentId, projId) {
+  const inp = document.getElementById('sti-' + parentId);
+  if (!inp) return;
+  const raw = inp.value.trim();
+  if (!raw) return;
+  const { text, status } = parseStatus(raw);
+  const parent = data.tasks.find(t => t.id === parentId);
+  data.tasks.push({ id: genId(), projectId: projId, parentId, text, status: status || (parent ? parent.status : null), done: false, createdAt: Date.now() });
+  inp.value = '';
+  saveData(); render();
+}
+
 function toggleCheck(id) {
-  const list = state.lists[state.activeTab];
-  const item = list.find(i => i.id === id);
-  if (item) { item.done = !item.done; item.doneAt = item.done ? Date.now() : null; }
-  save(); render();
+  const t = data.tasks.find(t => t.id === id);
+  if (!t) return;
+  t.done = !t.done; t.doneAt = t.done ? Date.now() : null;
+  saveData(); render();
 }
 
-function deleteItem(id) {
-  state.lists[state.activeTab] = state.lists[state.activeTab].filter(i => i.id !== id);
-  save(); render();
+function deleteTask(id) {
+  data.tasks = data.tasks.filter(t => t.id !== id && t.parentId !== id);
+  saveData(); render();
 }
-
-function toggleDone() { state.showDone = !state.showDone; render(); }
 
 function clearDone() {
-  state.lists[state.activeTab] = state.lists[state.activeTab].filter(i => !i.done);
-  save(); render();
+  const key = STATUS_KEY[ui.activeTab];
+  const doneIds = data.tasks.filter(t => !t.parentId && t.done && t.status === key).map(t => t.id);
+  data.tasks = data.tasks.filter(t => !doneIds.includes(t.id) && !doneIds.includes(t.parentId));
+  saveData(); render();
 }
 
-function toggleMove(id, e) {
-  e.stopPropagation();
-  moveOpenId = moveOpenId === id ? null : id;
-  render();
+function moveTask(id, toTab) {
+  const t = data.tasks.find(t => t.id === id);
+  if (t) { t.status = STATUS_KEY[toTab]; t.done = false; }
+  // move subtasks too
+  data.tasks.filter(s => s.parentId === id && s.status === STATUS_KEY[ui.activeTab]).forEach(s => { s.status = STATUS_KEY[toTab]; });
+  ui.moveOpenId = null;
+  saveData(); render();
 }
 
-function moveItem(id, to) {
-  const item = state.lists[state.activeTab].find(i => i.id === id);
-  if (!item) return;
-  state.lists[state.activeTab] = state.lists[state.activeTab].filter(i => i.id !== id);
-  state.lists[to].push({ ...item, done: false, doneAt: null });
-  moveOpenId = null;
-  save(); render();
+function toggleMove(id, e) { e.stopPropagation(); ui.moveOpenId = ui.moveOpenId === id ? null : id; render(); }
+
+function cycleStatus(id, parentId) {
+  const cycle = [null, 'N', 'L', 'W'];
+  const t = data.tasks.find(t => t.id === id);
+  if (!t) return;
+  // If has a parent and no explicit status, base off parent
+  const current = t.status;
+  const idx = cycle.indexOf(current);
+  t.status = cycle[(idx + 1) % cycle.length];
+  saveData(); render();
 }
 
-function startEdit(id) {
-  editingId = id;
-  render();
-}
+function startEdit(id) { ui.editingTask = { id }; render(); }
 
 function saveEdit(id) {
-  const inp = document.getElementById('edit-' + id);
-  if (!inp) return;
+  const inp = document.getElementById('edit-' + id) || document.getElementById('pedit-' + id);
+  if (!inp) { ui.editingTask = null; render(); return; }
   const text = inp.value.trim();
   if (text) {
-    const item = state.lists[state.activeTab].find(i => i.id === id);
-    if (item) item.text = text;
-    save();
+    const t = data.tasks.find(t => t.id === id);
+    if (t) t.text = text;
+    saveData();
   }
-  editingId = null;
-  render();
+  ui.editingTask = null; render();
 }
 
 function editKeydown(e, id) {
   if (e.key === 'Enter') { e.preventDefault(); saveEdit(id); }
-  if (e.key === 'Escape') { editingId = null; render(); }
+  if (e.key === 'Escape') { ui.editingTask = null; render(); }
+}
+function projEditKeydown(e, id) { editKeydown(e, id); }
+
+// Close move on outside click
+document.addEventListener('click', () => { if (ui.moveOpenId) { ui.moveOpenId = null; render(); } });
+
+// ── Project CRUD ───────────────────────────────────────────────────────
+function openNewProject() {
+  ui.editingProject = null;
+  document.getElementById('modalTitle').textContent = 'New Project';
+  document.getElementById('projNameInput').value = '';
+  document.getElementById('projEmojiInput').value = '';
+  document.getElementById('projLabelInput').value = '';
+  document.getElementById('projDateInput').value = '';
+  document.getElementById('modalDeleteBtn').style.display = 'none';
+  document.getElementById('projModal').style.display = 'flex';
+  setTimeout(() => document.getElementById('projNameInput').focus(), 50);
 }
 
-// Close move menu on outside click
-document.addEventListener('click', () => {
-  if (moveOpenId) { moveOpenId = null; render(); }
-});
+function openEditProject(id, e) {
+  e.stopPropagation();
+  const proj = data.projects.find(p => p.id === id);
+  if (!proj) return;
+  ui.editingProject = id;
+  document.getElementById('modalTitle').textContent = 'Edit Project';
+  document.getElementById('projNameInput').value = proj.name;
+  document.getElementById('projEmojiInput').value = proj.emoji || '';
+  document.getElementById('projLabelInput').value = proj.label || '';
+  document.getElementById('projDateInput').value = proj.targetDate || '';
+  document.getElementById('modalDeleteBtn').style.display = id !== MISC_PROJECT_ID ? '' : 'none';
+  document.getElementById('projModal').style.display = 'flex';
+}
+
+function saveProject() {
+  const name = document.getElementById('projNameInput').value.trim();
+  if (!name) return;
+  const emoji = document.getElementById('projEmojiInput').value.trim();
+  const label = document.getElementById('projLabelInput').value.trim() || name.slice(0,8);
+  const targetDate = document.getElementById('projDateInput').value || null;
+
+  if (ui.editingProject) {
+    const proj = data.projects.find(p => p.id === ui.editingProject);
+    if (proj) { proj.name = name; proj.emoji = emoji; proj.label = label; proj.targetDate = targetDate; }
+  } else {
+    data.projects.push({ id: genId(), name, emoji, label, targetDate, collapsed: false });
+  }
+  saveData(); closeModal(); render();
+}
+
+function deleteProject() {
+  if (!ui.editingProject || ui.editingProject === MISC_PROJECT_ID) return;
+  // Move tasks to misc
+  data.tasks.filter(t => t.projectId === ui.editingProject).forEach(t => { t.projectId = MISC_PROJECT_ID; });
+  data.projects = data.projects.filter(p => p.id !== ui.editingProject);
+  saveData(); closeModal(); render();
+}
+
+function closeModal() { document.getElementById('projModal').style.display = 'none'; }
+function handleModalOverlay(e) { if (e.target === document.getElementById('projModal')) closeModal(); }
+
+function formatDate(d) {
+  if (!d) return '';
+  const dt = new Date(d + 'T00:00:00');
+  return dt.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+}
 
 // ── Morning Review ─────────────────────────────────────────────────────
 function getApiKey() { return localStorage.getItem('swtasks-apikey') || ''; }
-
 function saveKey() {
   const val = document.getElementById('keyInput').value.trim();
   if (!val) return;
@@ -708,61 +1007,54 @@ function saveKey() {
   document.getElementById('keyPanel').style.display = 'none';
   startReview();
 }
-
-function closeReview() {
-  document.getElementById('reviewPanel').classList.remove('visible');
-  reviewOpen = false;
-}
+function closeReview() { document.getElementById('reviewPanel').classList.remove('visible'); }
 
 async function startReview() {
   const key = getApiKey();
-  if (!key) {
-    document.getElementById('keyPanel').style.display = 'flex';
-    return;
-  }
+  if (!key) { document.getElementById('keyPanel').style.display = 'flex'; return; }
 
   const btn = document.getElementById('reviewBtn');
   btn.classList.add('loading');
-
   const panel = document.getElementById('reviewPanel');
   const body = document.getElementById('reviewBody');
   panel.classList.add('visible');
-  body.innerHTML = '';
-  reviewOpen = true;
+  body.innerHTML = '<span style="color:var(--muted);font-size:13px;font-family:var(--sans)">Scanning…</span>';
 
-  // Snapshot counts
-  const snapshot = TABS.map(t => {
-    const open = state.lists[t].filter(i => !i.done).length;
-    const done = state.lists[t].filter(i => i.done).length;
-    return `${t}: ${open} open, ${done} done`;
+  const snapshot = STATUS_TABS.map(tab => {
+    const k = STATUS_KEY[tab];
+    const items = data.tasks.filter(t => !t.parentId && !t.done && t.status === k);
+    if (!items.length) return `${tab}: (empty)`;
+    return `${tab}:\n` + items.map(t => {
+      const proj = data.projects.find(p => p.id === t.projectId);
+      const projLabel = proj && proj.id !== MISC_PROJECT_ID ? ` [${proj.label}]` : '';
+      return `  - ${t.text}${projLabel}`;
+    }).join('\n');
+  }).join('\n\n');
+
+  const projSummary = data.projects.filter(p => p.id !== MISC_PROJECT_ID).map(p => {
+    const open = data.tasks.filter(t => t.projectId === p.id && !t.done && !t.parentId).length;
+    return `${p.emoji || ''} ${p.name} (${open} open${p.targetDate ? ', due ' + formatDate(p.targetDate) : ''})`;
   }).join('\n');
 
-  // Current open items
-  const currentItems = TABS.map(t => {
-    const items = state.lists[t].filter(i => !i.done);
-    if (!items.length) return '';
-    return `${t}:\n` + items.map(i => `  - ${i.text}`).join('\n');
-  }).filter(Boolean).join('\n\n');
-
-  const prompt = `You are a productivity assistant reviewing tasks for Simon Weiss.
+  const prompt = `You are a productivity assistant reviewing tasks for Simon Weiss, who works at Meta in hardware/VR, coaches a youth soccer team, and is managing significant family medical logistics alongside personal projects.
 
 Current task list:
-${currentItems || '(empty)'}
-
-List snapshot:
 ${snapshot}
+
+Active projects:
+${projSummary || '(none)'}
 
 Please do two things:
 
-1. SNAPSHOT: Give a tight 2-3 sentence summary of where things stand across Now/Later/Waiting. Note anything that looks stale, misplaced, or worth flagging.
+1. SNAPSHOT: A tight 2-3 sentence summary of where things stand. Flag anything stale, misplaced, or worth attention.
 
-2. SUGGESTIONS: Based on your knowledge of Simon's current situation (managing family medical logistics at Fred Hutch, work at Meta, youth soccer coaching, titanium bike frame build with Waltly, cabin projects in Brinnon), suggest 3-5 tasks that might be missing from his list. For each suggestion, recommend which tab it belongs in (Now/Later/Waiting).
+2. SUGGESTIONS: 3-5 tasks that might be missing based on Simon's situation (Fred Hutch medical logistics, Meta work, Raptors soccer coaching, Strix Varia titanium bike build, cabin in Brinnon). For each, recommend a status (#N/#L/#W) and suggest a project if relevant.
 
-Format your suggestions as a JSON block at the end, like:
+Format suggestions as JSON at the end:
 SUGGESTIONS_JSON:
-[{"text": "task description", "tab": "Now"}, ...]
+[{"text":"task text","status":"N","projectHint":"bike"}]
 
-Keep everything concise and actionable.`;
+Keep it tight and actionable.`;
 
   try {
     const res = await fetch('https://api.anthropic.com/v1/messages', {
@@ -773,91 +1065,69 @@ Keep everything concise and actionable.`;
         'anthropic-version': '2023-06-01',
         'anthropic-dangerous-direct-browser-access': 'true'
       },
-      body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
-        max_tokens: 1000,
-        messages: [{ role: 'user', content: prompt }]
-      })
+      body: JSON.stringify({ model: 'claude-sonnet-4-20250514', max_tokens: 1000, messages: [{ role: 'user', content: prompt }] })
     });
+    const d = await res.json();
+    if (d.error) { body.innerHTML = `<span style="color:var(--danger)">${d.error.message}</span>`; btn.classList.remove('loading'); return; }
 
-    const data = await res.json();
-
-    if (data.error) {
-      body.innerHTML = `<span style="color:var(--danger)">${data.error.message}</span>`;
-      btn.classList.remove('loading');
-      return;
-    }
-
-    const text = data.content?.[0]?.text || '';
-
-    // Split snapshot from suggestions
+    const text = d.content?.[0]?.text || '';
     const jsonMarker = text.indexOf('SUGGESTIONS_JSON:');
-    const narrativePart = jsonMarker > -1 ? text.slice(0, jsonMarker).trim() : text.trim();
+    const narrative = jsonMarker > -1 ? text.slice(0, jsonMarker).trim() : text.trim();
     let suggestions = [];
-
     if (jsonMarker > -1) {
-      try {
-        const jsonStr = text.slice(jsonMarker + 'SUGGESTIONS_JSON:'.length).trim();
-        suggestions = JSON.parse(jsonStr);
-      } catch(e) {}
+      try { suggestions = JSON.parse(text.slice(jsonMarker + 'SUGGESTIONS_JSON:'.length).trim()); } catch(e) {}
     }
 
-    // Render snapshot
-    body.innerHTML = `<div style="margin-bottom:14px;font-family:var(--sans);font-size:13px;line-height:1.6;color:var(--muted)">${escHtml(narrativePart)}</div>`;
+    body.innerHTML = `<div style="margin-bottom:12px;font-family:var(--sans);font-size:13px;line-height:1.6;color:var(--muted)">${esc(narrative)}</div>`;
 
-    // Render suggestion items
     if (suggestions.length > 0) {
-      const sugLabel = document.createElement('div');
-      sugLabel.style.cssText = 'font-size:9px;letter-spacing:3px;color:var(--muted);text-transform:uppercase;margin-bottom:8px;';
-      sugLabel.textContent = 'Suggested Additions';
-      body.appendChild(sugLabel);
-
-      suggestions.forEach((s, idx) => {
-        const tab = TABS.includes(s.tab) ? s.tab : 'Later';
+      const label = document.createElement('div');
+      label.style.cssText = 'font-size:9px;letter-spacing:3px;color:var(--muted2);text-transform:uppercase;margin-bottom:8px;font-family:var(--mono);';
+      label.textContent = 'Suggested';
+      body.appendChild(label);
+      suggestions.forEach((s, i) => {
+        const statusKey = ['N','L','W'].includes(s.status) ? s.status : 'L';
+        const tabName = STATUS_MAP[statusKey] || 'Later';
         const row = document.createElement('div');
         row.className = 'suggestion-item';
-        row.id = 'sug-' + idx;
         row.innerHTML = `
-          <span class="suggestion-tab ${tab}">${tab}</span>
-          <span class="suggestion-text">${escHtml(s.text)}</span>
-          <button class="add-suggestion" id="sugbtn-${idx}" onclick="addSuggestion(${idx},'${escHtml(s.text)}','${tab}')">+ Add</button>
-        `;
+          <span class="sug-tab ${tabName}">${tabName}</span>
+          <span class="suggestion-text">${esc(s.text)}</span>
+          <button class="add-sug" id="sugbtn-${i}" onclick="addSuggestion(${i},'${esc(s.text)}','${statusKey}','${esc(s.projectHint||'')}')">+ Add</button>`;
         body.appendChild(row);
       });
     }
-
-    // Render snapshot counts
-    const snap = document.createElement('div');
-    snap.className = 'review-snapshot';
-    snap.innerHTML = `<div class="snapshot-label">Current counts</div>` +
-      TABS.map(t => {
-        const open = state.lists[t].filter(i => !i.done).length;
-        return `<div class="snapshot-row"><span>${t}</span><span>${open} open</span></div>`;
-      }).join('');
-    body.appendChild(snap);
-
   } catch(e) {
     body.innerHTML = `<span style="color:var(--danger)">Error: ${e.message}</span>`;
   }
-
   btn.classList.remove('loading');
 }
 
-function addSuggestion(idx, text, tab) {
-  state.lists[tab].push({ id: genId(), text, done: false, createdAt: Date.now() });
-  save();
+function addSuggestion(idx, text, status, projectHint) {
+  // Try to match project hint to existing project label
+  let projId = MISC_PROJECT_ID;
+  if (projectHint) {
+    const match = data.projects.find(p => p.label && p.label.toLowerCase().includes(projectHint.toLowerCase()));
+    if (match) projId = match.id;
+  }
+  data.tasks.push({ id: genId(), projectId: projId, parentId: null, text, status, done: false, createdAt: Date.now() });
+  saveData();
   const btn = document.getElementById('sugbtn-' + idx);
   if (btn) { btn.textContent = '✓'; btn.classList.add('added'); btn.disabled = true; }
-  renderTabs(); // update badges
+  render();
+}
+
+// ── Utilities ──────────────────────────────────────────────────────────
+function esc(s) {
+  if (!s) return '';
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
 // ── Init ───────────────────────────────────────────────────────────────
-document.getElementById('addInput').addEventListener('keydown', e => {
-  if (e.key === 'Enter') addItem();
-});
-document.getElementById('addSubmit').addEventListener('click', addItem);
+document.getElementById('addInput').addEventListener('keydown', e => { if (e.key === 'Enter') addTask(); });
+document.getElementById('addSubmit').addEventListener('click', addTask);
 
-load();
+loadData();
 render();
 </script>
 </body>
