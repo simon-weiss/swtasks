@@ -1,0 +1,864 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Tasks" />
+  <title>Tasks</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #0A0A0A;
+      --surface: #141414;
+      --border: #1F1F1F;
+      --border2: #2A2A2A;
+      --text: #E8E4DE;
+      --muted: #555;
+      --muted2: #333;
+      --now: #D4FF4F;
+      --later: #4FC3FF;
+      --waiting: #FF8C4B;
+      --danger: #FF4B4B;
+      --mono: 'IBM Plex Mono', monospace;
+      --sans: 'IBM Plex Sans', sans-serif;
+      --safe-top: env(safe-area-inset-top, 0px);
+      --safe-bottom: env(safe-area-inset-bottom, 0px);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+    html, body {
+      height: 100%;
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--mono);
+      overscroll-behavior: none;
+    }
+
+    #app {
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      max-width: 540px;
+      margin: 0 auto;
+      padding-top: var(--safe-top);
+      padding-bottom: var(--safe-bottom);
+    }
+
+    /* ── Header ── */
+    .header {
+      padding: 20px 20px 0;
+      flex-shrink: 0;
+    }
+
+    .header-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 20px;
+    }
+
+    .wordmark {
+      font-family: var(--mono);
+      font-size: 10px;
+      letter-spacing: 4px;
+      color: var(--muted);
+      text-transform: uppercase;
+    }
+
+    .review-btn {
+      background: none;
+      border: 1px solid var(--border2);
+      border-radius: 20px;
+      color: var(--muted);
+      font-family: var(--mono);
+      font-size: 10px;
+      letter-spacing: 2px;
+      padding: 6px 14px;
+      cursor: pointer;
+      text-transform: uppercase;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .review-btn:hover, .review-btn:active { border-color: var(--now); color: var(--now); }
+    .review-btn.loading { border-color: var(--now); color: var(--now); }
+
+    .review-btn .spinner {
+      width: 8px; height: 8px;
+      border: 1.5px solid var(--now);
+      border-top-color: transparent;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      display: none;
+    }
+    .review-btn.loading .spinner { display: block; }
+    .review-btn.loading .btn-label { display: none; }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── Tabs ── */
+    .tabs {
+      display: flex;
+      border-bottom: 1px solid var(--border);
+      margin: 0 -20px;
+      padding: 0 20px;
+    }
+
+    .tab {
+      background: none;
+      border: none;
+      border-bottom: 2px solid transparent;
+      margin-bottom: -1px;
+      padding: 10px 16px 11px;
+      cursor: pointer;
+      font-family: var(--mono);
+      font-size: 10px;
+      letter-spacing: 3px;
+      color: var(--muted);
+      text-transform: uppercase;
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      transition: all 0.15s;
+      flex-shrink: 0;
+    }
+    .tab.active[data-tab="Now"]     { color: var(--now);     border-bottom-color: var(--now); }
+    .tab.active[data-tab="Later"]   { color: var(--later);   border-bottom-color: var(--later); }
+    .tab.active[data-tab="Waiting"] { color: var(--waiting); border-bottom-color: var(--waiting); }
+
+    .badge {
+      font-size: 9px;
+      padding: 1px 5px;
+      border-radius: 8px;
+      font-weight: 600;
+      letter-spacing: 0;
+      background: var(--border2);
+      color: var(--muted);
+      transition: all 0.15s;
+    }
+    .tab.active[data-tab="Now"]     .badge { background: var(--now);     color: #0A0A0A; }
+    .tab.active[data-tab="Later"]   .badge { background: var(--later);   color: #0A0A0A; }
+    .tab.active[data-tab="Waiting"] .badge { background: var(--waiting); color: #0A0A0A; }
+
+    /* ── Add input ── */
+    .add-row {
+      padding: 14px 20px;
+      display: flex;
+      gap: 10px;
+      flex-shrink: 0;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .add-input {
+      flex: 1;
+      background: var(--surface);
+      border: 1px solid var(--border2);
+      border-radius: 8px;
+      color: var(--text);
+      font-family: var(--mono);
+      font-size: 13px;
+      padding: 10px 14px;
+      outline: none;
+      transition: border-color 0.15s;
+      -webkit-appearance: none;
+    }
+    .add-input::placeholder { color: var(--muted2); }
+    .add-input:focus { border-color: var(--active-accent, var(--now)); }
+
+    .add-submit {
+      width: 42px;
+      background: var(--active-accent, var(--now));
+      border: none;
+      border-radius: 8px;
+      color: #0A0A0A;
+      font-size: 20px;
+      font-weight: 600;
+      cursor: pointer;
+      flex-shrink: 0;
+      transition: opacity 0.15s;
+    }
+    .add-submit:active { opacity: 0.7; }
+
+    /* ── List ── */
+    .list-area {
+      flex: 1;
+      overflow-y: auto;
+      padding: 6px 20px;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .empty-state {
+      text-align: center;
+      color: var(--muted2);
+      font-size: 11px;
+      letter-spacing: 3px;
+      padding: 40px 0;
+    }
+
+    .task-row {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      padding: 11px 0;
+      border-bottom: 1px solid var(--border);
+      animation: fadeIn 0.2s ease;
+    }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }
+
+    .task-row.done { opacity: 0.3; }
+
+    .checkbox {
+      width: 18px; height: 18px;
+      border: 1.5px solid var(--border2);
+      border-radius: 4px;
+      background: none;
+      cursor: pointer;
+      flex-shrink: 0;
+      margin-top: 2px;
+      display: flex; align-items: center; justify-content: center;
+      transition: all 0.15s;
+      font-size: 10px;
+      color: var(--muted);
+    }
+    .task-row.done .checkbox { background: var(--border2); }
+
+    .task-text {
+      flex: 1;
+      font-size: 13px;
+      line-height: 1.55;
+      letter-spacing: 0.2px;
+      word-break: break-word;
+      cursor: text;
+      font-family: var(--sans);
+      font-weight: 400;
+    }
+    .task-row.done .task-text { text-decoration: line-through; }
+
+    .task-edit-input {
+      flex: 1;
+      background: var(--surface);
+      border: 1px solid var(--active-accent, var(--now));
+      border-radius: 4px;
+      color: var(--text);
+      font-family: var(--sans);
+      font-size: 13px;
+      padding: 3px 8px;
+      outline: none;
+    }
+
+    .task-actions {
+      display: flex;
+      gap: 2px;
+      flex-shrink: 0;
+      align-items: flex-start;
+      margin-top: 1px;
+    }
+
+    .icon-btn {
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: var(--muted2);
+      font-size: 14px;
+      padding: 2px 5px;
+      line-height: 1;
+      border-radius: 4px;
+      transition: color 0.15s;
+      font-family: var(--mono);
+    }
+    .icon-btn:hover { color: var(--text); }
+    .icon-btn.del:hover { color: var(--danger); }
+
+    /* Move popover */
+    .move-wrap { position: relative; }
+    .move-menu {
+      position: absolute;
+      right: 0; top: 100%;
+      background: #1A1A1A;
+      border: 1px solid var(--border2);
+      border-radius: 8px;
+      overflow: hidden;
+      z-index: 100;
+      min-width: 100px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+    }
+    .move-menu button {
+      display: block; width: 100%;
+      background: none; border: none;
+      font-family: var(--mono);
+      font-size: 10px; letter-spacing: 2px;
+      padding: 10px 16px;
+      cursor: pointer;
+      text-align: left;
+      text-transform: uppercase;
+      transition: background 0.1s;
+    }
+    .move-menu button:hover { background: var(--border2); }
+
+    /* ── Done section ── */
+    .done-toggle {
+      background: none; border: none;
+      color: var(--muted2); font-family: var(--mono);
+      font-size: 10px; letter-spacing: 3px;
+      text-transform: uppercase;
+      cursor: pointer;
+      display: flex; align-items: center; gap: 8px;
+      padding: 14px 0 8px;
+    }
+    .done-toggle:hover { color: var(--muted); }
+
+    .clear-done {
+      background: none;
+      border: 1px solid var(--border2);
+      border-radius: 4px;
+      color: var(--muted);
+      font-family: var(--mono);
+      font-size: 10px;
+      letter-spacing: 2px;
+      padding: 6px 12px;
+      cursor: pointer;
+      text-transform: uppercase;
+      margin: 8px 0 16px;
+      transition: all 0.15s;
+    }
+    .clear-done:hover { border-color: var(--danger); color: var(--danger); }
+
+    /* ── Review panel ── */
+    .review-panel {
+      margin: 0 20px 0;
+      background: var(--surface);
+      border: 1px solid var(--border2);
+      border-radius: 10px;
+      overflow: hidden;
+      flex-shrink: 0;
+      display: none;
+    }
+    .review-panel.visible { display: block; }
+
+    .review-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--border);
+    }
+    .review-title {
+      font-size: 10px;
+      letter-spacing: 3px;
+      color: var(--now);
+      text-transform: uppercase;
+    }
+    .review-close {
+      background: none; border: none;
+      color: var(--muted); cursor: pointer;
+      font-size: 16px; line-height: 1;
+      padding: 0 4px;
+    }
+
+    .review-body {
+      padding: 14px 16px;
+      max-height: 280px;
+      overflow-y: auto;
+      font-family: var(--sans);
+      font-size: 13px;
+      line-height: 1.6;
+      color: var(--text);
+      white-space: pre-wrap;
+    }
+
+    .suggestion-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      padding: 8px 0;
+      border-bottom: 1px solid var(--border);
+      animation: fadeIn 0.2s ease;
+    }
+    .suggestion-item:last-child { border-bottom: none; }
+
+    .suggestion-text { flex: 1; font-size: 13px; font-family: var(--sans); line-height: 1.5; }
+    .suggestion-tab {
+      font-family: var(--mono);
+      font-size: 9px;
+      letter-spacing: 2px;
+      padding: 2px 7px;
+      border-radius: 10px;
+      flex-shrink: 0;
+      margin-top: 2px;
+      text-transform: uppercase;
+    }
+    .suggestion-tab.Now     { background: rgba(212,255,79,0.15);  color: var(--now); }
+    .suggestion-tab.Later   { background: rgba(79,195,255,0.15);  color: var(--later); }
+    .suggestion-tab.Waiting { background: rgba(255,140,75,0.15);  color: var(--waiting); }
+
+    .add-suggestion {
+      background: none; border: 1px solid var(--border2);
+      border-radius: 4px; color: var(--muted);
+      font-family: var(--mono); font-size: 10px;
+      letter-spacing: 1px; padding: 3px 8px;
+      cursor: pointer; flex-shrink: 0; margin-top: 2px;
+      transition: all 0.15s;
+    }
+    .add-suggestion:hover { border-color: var(--now); color: var(--now); }
+    .add-suggestion.added { border-color: var(--muted2); color: var(--muted2); cursor: default; }
+
+    .review-snapshot {
+      padding: 0 16px 14px;
+      border-top: 1px solid var(--border);
+      margin-top: 4px;
+    }
+    .snapshot-label {
+      font-size: 9px; letter-spacing: 3px; color: var(--muted);
+      text-transform: uppercase; padding: 12px 0 8px;
+    }
+    .snapshot-row {
+      display: flex; justify-content: space-between;
+      font-size: 12px; padding: 3px 0; color: var(--muted);
+    }
+    .snapshot-row span:first-child { font-family: var(--mono); letter-spacing: 1px; }
+
+    /* ── API key prompt ── */
+    .key-panel {
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.85);
+      display: flex; align-items: center; justify-content: center;
+      z-index: 200;
+      padding: 24px;
+    }
+    .key-card {
+      background: var(--surface);
+      border: 1px solid var(--border2);
+      border-radius: 12px;
+      padding: 24px;
+      max-width: 360px;
+      width: 100%;
+    }
+    .key-title { font-size: 11px; letter-spacing: 3px; color: var(--now); margin-bottom: 10px; text-transform: uppercase; }
+    .key-desc { font-family: var(--sans); font-size: 13px; color: var(--muted); line-height: 1.6; margin-bottom: 16px; }
+    .key-input {
+      width: 100%; background: var(--bg);
+      border: 1px solid var(--border2); border-radius: 6px;
+      color: var(--text); font-family: var(--mono);
+      font-size: 12px; padding: 10px 12px; outline: none;
+      margin-bottom: 12px;
+    }
+    .key-input:focus { border-color: var(--now); }
+    .key-save {
+      width: 100%; background: var(--now);
+      border: none; border-radius: 6px;
+      color: #0A0A0A; font-family: var(--mono);
+      font-size: 11px; letter-spacing: 2px;
+      padding: 12px; cursor: pointer;
+      text-transform: uppercase; font-weight: 600;
+    }
+
+    .spacer { height: 24px; }
+  </style>
+</head>
+<body>
+<div id="app">
+  <div class="header">
+    <div class="header-top">
+      <span class="wordmark">Tasks</span>
+      <button class="review-btn" id="reviewBtn" onclick="startReview()">
+        <div class="spinner"></div>
+        <span class="btn-label">☀ Morning Review</span>
+      </button>
+    </div>
+    <div class="tabs" id="tabs"></div>
+  </div>
+
+  <!-- Review panel -->
+  <div class="review-panel" id="reviewPanel">
+    <div class="review-header">
+      <span class="review-title">Morning Review</span>
+      <button class="review-close" onclick="closeReview()">×</button>
+    </div>
+    <div class="review-body" id="reviewBody"></div>
+  </div>
+
+  <div class="add-row">
+    <input class="add-input" id="addInput" placeholder="Add task…" autocomplete="off" autocorrect="off" />
+    <button class="add-submit" id="addSubmit">+</button>
+  </div>
+
+  <div class="list-area" id="listArea"></div>
+</div>
+
+<!-- API Key modal -->
+<div class="key-panel" id="keyPanel" style="display:none">
+  <div class="key-card">
+    <div class="key-title">Anthropic API Key</div>
+    <div class="key-desc">Enter your Anthropic API key to enable Morning Review. It's stored only in this browser.</div>
+    <input class="key-input" id="keyInput" type="password" placeholder="sk-ant-…" />
+    <button class="key-save" onclick="saveKey()">Save Key</button>
+  </div>
+</div>
+
+<script>
+// ── State ──────────────────────────────────────────────────────────────
+const TABS = ['Now', 'Later', 'Waiting'];
+const ACCENTS = { Now: '#D4FF4F', Later: '#4FC3FF', Waiting: '#FF8C4B' };
+let state = { lists: { Now: [], Later: [], Waiting: [] }, activeTab: 'Now', showDone: false };
+let reviewOpen = false;
+let moveOpenId = null;
+let editingId = null;
+
+function genId() { return Math.random().toString(36).slice(2, 10); }
+
+function load() {
+  try {
+    const saved = localStorage.getItem('swtasks-v1');
+    if (saved) state.lists = JSON.parse(saved);
+  } catch(e) {}
+}
+
+function save() {
+  try { localStorage.setItem('swtasks-v1', JSON.stringify(state.lists)); } catch(e) {}
+}
+
+// ── Render ─────────────────────────────────────────────────────────────
+function render() {
+  const accent = ACCENTS[state.activeTab];
+  document.documentElement.style.setProperty('--active-accent', accent);
+
+  renderTabs();
+  renderList();
+}
+
+function renderTabs() {
+  const el = document.getElementById('tabs');
+  el.innerHTML = TABS.map(tab => {
+    const count = state.lists[tab].filter(i => !i.done).length;
+    const active = tab === state.activeTab ? 'active' : '';
+    const badge = count > 0 ? `<span class="badge">${count}</span>` : '';
+    return `<button class="tab ${active}" data-tab="${tab}" onclick="setTab('${tab}')">${tab}${badge}</button>`;
+  }).join('');
+}
+
+function renderList() {
+  const el = document.getElementById('listArea');
+  const items = state.lists[state.activeTab] || [];
+  const open = items.filter(i => !i.done);
+  const done = items.filter(i => i.done);
+
+  let html = '';
+
+  if (open.length === 0 && done.length === 0) {
+    html = '<div class="empty-state">— CLEAR —</div>';
+  }
+
+  open.forEach(item => { html += renderTask(item, false); });
+
+  if (done.length > 0) {
+    const arrow = state.showDone ? '▾' : '▸';
+    html += `<button class="done-toggle" onclick="toggleDone()">${arrow} Done (${done.length})</button>`;
+    if (state.showDone) {
+      done.forEach(item => { html += renderTask(item, true); });
+      html += `<button class="clear-done" onclick="clearDone()">Clear done</button>`;
+    }
+  }
+
+  html += '<div class="spacer"></div>';
+  el.innerHTML = html;
+
+  // Restore editing focus
+  if (editingId) {
+    const inp = document.getElementById('edit-' + editingId);
+    if (inp) { inp.focus(); inp.setSelectionRange(inp.value.length, inp.value.length); }
+  }
+}
+
+function renderTask(item, isDone) {
+  const otherTabs = TABS.filter(t => t !== state.activeTab);
+  const doneClass = isDone ? 'done' : '';
+  const accent = ACCENTS[state.activeTab];
+
+  let textPart;
+  if (editingId === item.id) {
+    textPart = `<input class="task-edit-input" id="edit-${item.id}" value="${escHtml(item.text)}"
+      onkeydown="editKeydown(event,'${item.id}')" onblur="saveEdit('${item.id}')" />`;
+  } else {
+    textPart = `<span class="task-text" ondblclick="startEdit('${item.id}')">${escHtml(item.text)}</span>`;
+  }
+
+  let actions = '';
+  if (!isDone && editingId !== item.id) {
+    const moveMenu = moveOpenId === item.id ? `
+      <div class="move-menu">
+        ${otherTabs.map(t => `<button style="color:${ACCENTS[t]}" onclick="moveItem('${item.id}','${t}')">${t}</button>`).join('')}
+      </div>` : '';
+    actions = `
+      <div class="task-actions">
+        <div class="move-wrap">
+          <button class="icon-btn" onclick="toggleMove('${item.id}',event)" title="Move">↗</button>
+          ${moveMenu}
+        </div>
+        <button class="icon-btn del" onclick="deleteItem('${item.id}')" title="Delete">×</button>
+      </div>`;
+  }
+
+  const check = isDone ? '✓' : '';
+  return `
+    <div class="task-row ${doneClass}" id="task-${item.id}">
+      <button class="checkbox" onclick="toggleCheck('${item.id}')">${check}</button>
+      ${textPart}
+      ${actions}
+    </div>`;
+}
+
+function escHtml(s) {
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ── Actions ────────────────────────────────────────────────────────────
+function setTab(tab) {
+  state.activeTab = tab;
+  state.showDone = false;
+  editingId = null;
+  moveOpenId = null;
+  render();
+}
+
+function addItem() {
+  const inp = document.getElementById('addInput');
+  const text = inp.value.trim();
+  if (!text) return;
+  state.lists[state.activeTab].push({ id: genId(), text, done: false, createdAt: Date.now() });
+  inp.value = '';
+  save();
+  render();
+  inp.focus();
+}
+
+function toggleCheck(id) {
+  const list = state.lists[state.activeTab];
+  const item = list.find(i => i.id === id);
+  if (item) { item.done = !item.done; item.doneAt = item.done ? Date.now() : null; }
+  save(); render();
+}
+
+function deleteItem(id) {
+  state.lists[state.activeTab] = state.lists[state.activeTab].filter(i => i.id !== id);
+  save(); render();
+}
+
+function toggleDone() { state.showDone = !state.showDone; render(); }
+
+function clearDone() {
+  state.lists[state.activeTab] = state.lists[state.activeTab].filter(i => !i.done);
+  save(); render();
+}
+
+function toggleMove(id, e) {
+  e.stopPropagation();
+  moveOpenId = moveOpenId === id ? null : id;
+  render();
+}
+
+function moveItem(id, to) {
+  const item = state.lists[state.activeTab].find(i => i.id === id);
+  if (!item) return;
+  state.lists[state.activeTab] = state.lists[state.activeTab].filter(i => i.id !== id);
+  state.lists[to].push({ ...item, done: false, doneAt: null });
+  moveOpenId = null;
+  save(); render();
+}
+
+function startEdit(id) {
+  editingId = id;
+  render();
+}
+
+function saveEdit(id) {
+  const inp = document.getElementById('edit-' + id);
+  if (!inp) return;
+  const text = inp.value.trim();
+  if (text) {
+    const item = state.lists[state.activeTab].find(i => i.id === id);
+    if (item) item.text = text;
+    save();
+  }
+  editingId = null;
+  render();
+}
+
+function editKeydown(e, id) {
+  if (e.key === 'Enter') { e.preventDefault(); saveEdit(id); }
+  if (e.key === 'Escape') { editingId = null; render(); }
+}
+
+// Close move menu on outside click
+document.addEventListener('click', () => {
+  if (moveOpenId) { moveOpenId = null; render(); }
+});
+
+// ── Morning Review ─────────────────────────────────────────────────────
+function getApiKey() { return localStorage.getItem('swtasks-apikey') || ''; }
+
+function saveKey() {
+  const val = document.getElementById('keyInput').value.trim();
+  if (!val) return;
+  localStorage.setItem('swtasks-apikey', val);
+  document.getElementById('keyPanel').style.display = 'none';
+  startReview();
+}
+
+function closeReview() {
+  document.getElementById('reviewPanel').classList.remove('visible');
+  reviewOpen = false;
+}
+
+async function startReview() {
+  const key = getApiKey();
+  if (!key) {
+    document.getElementById('keyPanel').style.display = 'flex';
+    return;
+  }
+
+  const btn = document.getElementById('reviewBtn');
+  btn.classList.add('loading');
+
+  const panel = document.getElementById('reviewPanel');
+  const body = document.getElementById('reviewBody');
+  panel.classList.add('visible');
+  body.innerHTML = '';
+  reviewOpen = true;
+
+  // Snapshot counts
+  const snapshot = TABS.map(t => {
+    const open = state.lists[t].filter(i => !i.done).length;
+    const done = state.lists[t].filter(i => i.done).length;
+    return `${t}: ${open} open, ${done} done`;
+  }).join('\n');
+
+  // Current open items
+  const currentItems = TABS.map(t => {
+    const items = state.lists[t].filter(i => !i.done);
+    if (!items.length) return '';
+    return `${t}:\n` + items.map(i => `  - ${i.text}`).join('\n');
+  }).filter(Boolean).join('\n\n');
+
+  const prompt = `You are a productivity assistant reviewing tasks for Simon Weiss.
+
+Current task list:
+${currentItems || '(empty)'}
+
+List snapshot:
+${snapshot}
+
+Please do two things:
+
+1. SNAPSHOT: Give a tight 2-3 sentence summary of where things stand across Now/Later/Waiting. Note anything that looks stale, misplaced, or worth flagging.
+
+2. SUGGESTIONS: Based on your knowledge of Simon's current situation (managing family medical logistics at Fred Hutch, work at Meta, youth soccer coaching, titanium bike frame build with Waltly, cabin projects in Brinnon), suggest 3-5 tasks that might be missing from his list. For each suggestion, recommend which tab it belongs in (Now/Later/Waiting).
+
+Format your suggestions as a JSON block at the end, like:
+SUGGESTIONS_JSON:
+[{"text": "task description", "tab": "Now"}, ...]
+
+Keep everything concise and actionable.`;
+
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': key,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true'
+      },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 1000,
+        messages: [{ role: 'user', content: prompt }]
+      })
+    });
+
+    const data = await res.json();
+
+    if (data.error) {
+      body.innerHTML = `<span style="color:var(--danger)">${data.error.message}</span>`;
+      btn.classList.remove('loading');
+      return;
+    }
+
+    const text = data.content?.[0]?.text || '';
+
+    // Split snapshot from suggestions
+    const jsonMarker = text.indexOf('SUGGESTIONS_JSON:');
+    const narrativePart = jsonMarker > -1 ? text.slice(0, jsonMarker).trim() : text.trim();
+    let suggestions = [];
+
+    if (jsonMarker > -1) {
+      try {
+        const jsonStr = text.slice(jsonMarker + 'SUGGESTIONS_JSON:'.length).trim();
+        suggestions = JSON.parse(jsonStr);
+      } catch(e) {}
+    }
+
+    // Render snapshot
+    body.innerHTML = `<div style="margin-bottom:14px;font-family:var(--sans);font-size:13px;line-height:1.6;color:var(--muted)">${escHtml(narrativePart)}</div>`;
+
+    // Render suggestion items
+    if (suggestions.length > 0) {
+      const sugLabel = document.createElement('div');
+      sugLabel.style.cssText = 'font-size:9px;letter-spacing:3px;color:var(--muted);text-transform:uppercase;margin-bottom:8px;';
+      sugLabel.textContent = 'Suggested Additions';
+      body.appendChild(sugLabel);
+
+      suggestions.forEach((s, idx) => {
+        const tab = TABS.includes(s.tab) ? s.tab : 'Later';
+        const row = document.createElement('div');
+        row.className = 'suggestion-item';
+        row.id = 'sug-' + idx;
+        row.innerHTML = `
+          <span class="suggestion-tab ${tab}">${tab}</span>
+          <span class="suggestion-text">${escHtml(s.text)}</span>
+          <button class="add-suggestion" id="sugbtn-${idx}" onclick="addSuggestion(${idx},'${escHtml(s.text)}','${tab}')">+ Add</button>
+        `;
+        body.appendChild(row);
+      });
+    }
+
+    // Render snapshot counts
+    const snap = document.createElement('div');
+    snap.className = 'review-snapshot';
+    snap.innerHTML = `<div class="snapshot-label">Current counts</div>` +
+      TABS.map(t => {
+        const open = state.lists[t].filter(i => !i.done).length;
+        return `<div class="snapshot-row"><span>${t}</span><span>${open} open</span></div>`;
+      }).join('');
+    body.appendChild(snap);
+
+  } catch(e) {
+    body.innerHTML = `<span style="color:var(--danger)">Error: ${e.message}</span>`;
+  }
+
+  btn.classList.remove('loading');
+}
+
+function addSuggestion(idx, text, tab) {
+  state.lists[tab].push({ id: genId(), text, done: false, createdAt: Date.now() });
+  save();
+  const btn = document.getElementById('sugbtn-' + idx);
+  if (btn) { btn.textContent = '✓'; btn.classList.add('added'); btn.disabled = true; }
+  renderTabs(); // update badges
+}
+
+// ── Init ───────────────────────────────────────────────────────────────
+document.getElementById('addInput').addEventListener('keydown', e => {
+  if (e.key === 'Enter') addItem();
+});
+document.getElementById('addSubmit').addEventListener('click', addItem);
+
+load();
+render();
+</script>
+</body>
+</html>
