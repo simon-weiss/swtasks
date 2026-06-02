@@ -258,6 +258,7 @@
       <div style="display:flex;align-items:center;gap:10px;">
         <span class="wordmark">Tasks</span>
         <div class="sync-indicator"><div class="sync-dot" id="syncDot"></div><span id="syncLabel"></span></div>
+        <button onclick="backupData()" title="Download backup" style="background:none;border:none;color:var(--muted3);font-size:12px;cursor:pointer;padding:2px 4px;font-family:var(--mono);transition:color 0.15s;" onmouseover="this.style.color='var(--muted)'" onmouseout="this.style.color='var(--muted3)'">⬇ backup</button>
       </div>
       <div class="top-actions">
         <button class="review-btn" id="reviewBtn" onclick="startReview()">
@@ -331,6 +332,7 @@
 // ── Constants ──────────────────────────────────────────────────────────
 const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbz_MN_xQsL1tTj8vo4XRe-g7uskUhUtY9pYgrRlgVH61ILtC0Z2PwTNjtEdperronUQkw/exec';
 const STORAGE_KEY = 'swtasks-v3';
+const DATA_VERSION = 1; // increment when data model changes
 const STATUS_TABS = ['Now','Later','Waiting'];
 const STATUS_MAP  = { N:'Now', L:'Later', W:'Waiting' };
 const TAB_KEY     = { Now:'N', Later:'L', Waiting:'W' };
@@ -345,6 +347,7 @@ const MISC_ID     = '__misc__';
 // Level 3 = grand-child   (parentId = level-2 id)
 
 let data = {
+  version: DATA_VERSION,
   projects: [{ id: MISC_ID, name: 'Daily / Misc', emoji: '📋', label: 'misc', targetDate: null }],
   tasks: []
 };
@@ -372,6 +375,7 @@ function localLoad() {
     const s = localStorage.getItem(STORAGE_KEY);
     if (s) data = JSON.parse(s);
     ensureMisc();
+    migrateData();
   } catch(e) {}
 }
 
@@ -381,6 +385,32 @@ function ensureMisc() {
   if (!data.projects.find(p => p.id === MISC_ID)) {
     data.projects.unshift({ id: MISC_ID, name: 'Daily / Misc', emoji: '📋', label: 'misc', targetDate: null });
   }
+}
+
+// Run whenever data is loaded — safe to call on any version
+function migrateData() {
+  const v = data.version || 0;
+
+  // v0 → v1: add version field, ensure all tasks have createdAt
+  if (v < 1) {
+    data.tasks.forEach(t => { if (!t.createdAt) t.createdAt = Date.now(); });
+    data.version = 1;
+    console.log('Migrated data to v1');
+  }
+
+  // Future migrations go here:
+  // if (v < 2) { ... data.version = 2; }
+}
+
+function backupData() {
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  const date = new Date().toISOString().slice(0, 10);
+  a.href = url;
+  a.download = `swtasks-backup-${date}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
 }
 
 // ── Cloud sync ─────────────────────────────────────────────────────────
@@ -402,6 +432,7 @@ async function cloudLoad() {
     if (remote.projects && remote.tasks) {
       data = remote;
       ensureMisc();
+      migrateData();
       localSave();
     }
     setSyncState('ok', 'synced');
