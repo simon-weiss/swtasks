@@ -7,6 +7,9 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="Tasks" />
   <title>Tasks</title>
+  <link rel="icon" type="image/svg+xml" href="favicon.svg" />
+  <link rel="alternate icon" href="data:image/x-icon;base64,AAABAAEAEBAQAAEABAAoAQAAFgAAACgAAAAQAAAAIAAAAAEABAAAAAAAgAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAA////AAAA/wD///8AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA" type="image/x-icon" />
+  <link rel="apple-touch-icon" href="favicon.svg" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
   <style>
@@ -212,7 +215,7 @@
     .add-task-inp { flex: 1; background: var(--surface2); border: 1px solid var(--border2); border-radius: 7px; color: var(--text); font-family: var(--sans); font-size: 13px; padding: 8px 11px; outline: none; transition: border-color 0.15s; -webkit-appearance: none; }
     .add-task-inp::placeholder { color: var(--muted3); }
     .add-task-inp:focus { border-color: var(--border2); }
-    .add-task-inp.tall { min-height: 80px; resize: none; line-height: 1.5; font-family: var(--sans); }
+    .add-task-inp.tall { min-height: 80px; resize: none; line-height: 1.5; font-family: var(--sans); overflow: hidden; }
     .add-task-btn { background: var(--surface2); border: 1px solid var(--border2); border-radius: 7px; color: var(--muted2); font-size: 16px; width: 34px; cursor: pointer; flex-shrink: 0; transition: all 0.15s; display: flex; align-items: center; justify-content: center; }
     .add-task-btn:hover { border-color: var(--now); color: var(--now); }
     .hint { font-size: 10px; color: var(--muted3); letter-spacing: 1px; margin-top: 4px; font-family: var(--mono); }
@@ -624,7 +627,7 @@ Example:
 Frame finish
   Figure out anodize scheme
   Find power supply
-  Pick colors"></textarea>
+  Pick colors" oninput="this.style.height='auto';this.style.height=this.scrollHeight+'px'"></textarea>
             <button class="bulk-save-btn" onclick="saveBulk('${proj.id}')">Add all</button>
           </div>
           <div class="hint">#N = Now · #L = Later · #W = Waiting</div>
