@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="Tasks" />
@@ -13,243 +14,390 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
   <style>
+    /* ── Themes ─────────────────────────────────────────────────────── */
     :root {
-      --bg: #0A0A0A;
-      --surface: #181818;
-      --surface2: #222;
-      --border: #2A2A2A;
-      --border2: #3A3A3A;
-      --text: #F0EDE8;
-      --muted: #E0DDD8;
-      --muted2: #C0BCB4;
-      --muted3: #98948E;
-      --now: #D4FF4F;
-      --later: #4FC3FF;
-      --waiting: #FF8C4B;
-      --danger: #FF4B4B;
-      --mono: 'IBM Plex Mono', monospace;
-      --sans: 'IBM Plex Sans', sans-serif;
-      --safe-top: env(safe-area-inset-top, 0px);
-      --safe-bottom: env(safe-area-inset-bottom, 0px);
+      --bg: #0A0A0A; --surface: #181818; --surface2: #222;
+      --border: #2A2A2A; --border2: #3A3A3A;
+      --text: #F0EDE8; --muted: #E0DDD8; --muted2: #C0BCB4; --muted3: #A09890;
+      --now: #D4FF4F; --later: #4FC3FF; --waiting: #FF8C4B;
+      --danger: #FF4B4B; --done-text: #888; --done-bg: transparent;
+      --move-menu-bg: #1C1C1C;
     }
+    [data-theme="light"] {
+      --bg: #F5F4F0; --surface: #FFFFFF; --surface2: #EDEBE6;
+      --border: #DDDBD4; --border2: #C8C5BC;
+      --text: #1A1916; --muted: #3A3835; --muted2: #6A6760; --muted3: #9A9790;
+      --now: #7AAF00; --later: #0080BB; --waiting: #CC5500;
+      --danger: #CC1111; --done-text: #AAA8A0; --done-bg: transparent;
+      --move-menu-bg: #FFF;
+    }
+    [data-theme="warm"] {
+      --bg: #1A1410; --surface: #251E18; --surface2: #2E2520;
+      --border: #3A3028; --border2: #4A3E34;
+      --text: #F2E8DC; --muted: #E8D8C4; --muted2: #C4AE94; --muted3: #A08870;
+      --now: #F0C040; --later: #80C8A0; --waiting: #E07840;
+      --danger: #E04040; --done-text: #806858; --done-bg: transparent;
+      --move-menu-bg: #2A2018;
+    }
+    [data-theme="forest"] {
+      --bg: #0D1510; --surface: #162018; --surface2: #1E2C20;
+      --border: #2A3C2C; --border2: #384E3A;
+      --text: #E8F0E4; --muted: #D8ECD0; --muted2: #A8C8A0; --muted3: #80A878;
+      --now: #A8E040; --later: #40C8C0; --waiting: #F0A040;
+      --danger: #F06060; --done-text: #608060; --done-bg: transparent;
+      --move-menu-bg: #182018;
+    }
+    [data-theme="purporange"] {
+      --bg: #F0EEF5; --surface: #FFFFFF; --surface2: #E8E4F0;
+      --border: #D8D0E8; --border2: #C0B4D8;
+      --text: #1A1428; --muted: #2E2448; --muted2: #6050A0; --muted3: #9080C0;
+      --now: #7040C8; --later: #A050D0; --waiting: #E06010;
+      --danger: #CC1111; --done-text: #B0A0CC; --done-bg: transparent;
+      --move-menu-bg: #FFF;
+    }
+
     * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
-    html, body { height: 100%; background: var(--bg); color: var(--text); font-family: var(--mono); overscroll-behavior: none; }
+    html, body { height: 100%; background: var(--bg); color: var(--text); font-family: 'IBM Plex Mono', monospace; overscroll-behavior: none; transition: background 0.2s, color 0.2s; }
 
-    #app { display: flex; flex-direction: column; height: 100%; max-width: 600px; margin: 0 auto; padding-top: var(--safe-top); padding-bottom: var(--safe-bottom); }
+    #app { display: flex; flex-direction: column; height: 100%; max-width: 600px; margin: 0 auto;
+      padding-top: env(safe-area-inset-top, 0px); padding-bottom: env(safe-area-inset-bottom, 0px); }
 
-    /* ── Top bar ── */
-    .topbar { flex-shrink: 0; padding: 16px 20px 0; }
-    .topbar-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+    /* ── Topbar ── */
+    .topbar { flex-shrink: 0; padding: 14px 20px 0; position: relative; }
+    .topbar-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+    .topbar-left { display: flex; align-items: center; gap: 8px; }
     .wordmark { font-size: 10px; letter-spacing: 4px; color: var(--muted3); text-transform: uppercase; }
 
-    .sync-indicator { font-size: 9px; letter-spacing: 2px; color: var(--muted3); font-family: var(--mono); display: flex; align-items: center; gap: 5px; }
+    .sync-indicator { font-size: 9px; letter-spacing: 1px; color: var(--muted3); display: flex; align-items: center; gap: 4px; }
     .sync-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--muted3); flex-shrink: 0; }
     .sync-dot.syncing { background: var(--later); animation: pulse 1s infinite; }
     .sync-dot.ok { background: var(--now); }
     .sync-dot.err { background: var(--danger); }
-    @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.3; } }
+    @keyframes pulse { 0%,100%{opacity:1}50%{opacity:0.3} }
 
-    .top-actions { display: flex; gap: 8px; align-items: center; }
-    .review-btn { background: none; border: 1px solid var(--border2); border-radius: 20px; color: var(--muted2); font-family: var(--mono); font-size: 9px; letter-spacing: 2px; padding: 5px 12px; cursor: pointer; text-transform: uppercase; transition: all 0.2s; display: flex; align-items: center; gap: 5px; }
-    .review-btn:hover { border-color: var(--now); color: var(--now); }
-    .review-btn.loading { border-color: var(--now); color: var(--now); }
-    .spinner { width: 7px; height: 7px; border: 1.5px solid var(--now); border-top-color: transparent; border-radius: 50%; animation: spin 0.7s linear infinite; display: none; }
+    .topbar-right { display: flex; gap: 6px; align-items: center; }
+
+    .review-btn { background: none; border: 1px solid var(--border2); border-radius: 20px; color: var(--muted2);
+      font-family: 'IBM Plex Mono', monospace; font-size: 9px; letter-spacing: 2px; padding: 5px 11px;
+      cursor: pointer; text-transform: uppercase; transition: all 0.2s; display: flex; align-items: center; gap: 5px; }
+    .review-btn:hover, .review-btn.loading { border-color: var(--now); color: var(--now); }
+    .spinner { width: 7px; height: 7px; border: 1.5px solid var(--now); border-top-color: transparent;
+      border-radius: 50%; animation: spin 0.7s linear infinite; display: none; }
     .review-btn.loading .spinner { display: block; }
     .review-btn.loading .btn-label { display: none; }
     @keyframes spin { to { transform: rotate(360deg); } }
 
+    /* overflow menu */
+    .overflow-btn { background: none; border: 1px solid var(--border2); border-radius: 6px; color: var(--muted2);
+      font-size: 15px; width: 30px; height: 28px; cursor: pointer; display: flex; align-items: center;
+      justify-content: center; transition: all 0.15s; letter-spacing: 0; }
+    .overflow-btn:hover { border-color: var(--now); color: var(--now); }
+
+    .overflow-menu { position: absolute; right: 20px; top: 52px; z-index: 300;
+      background: var(--surface); border: 1px solid var(--border2); border-radius: 10px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.3); display: none; min-width: 160px; overflow: hidden; }
+    .overflow-menu.open { display: block; }
+
+    .overflow-section { padding: 8px 0; border-bottom: 1px solid var(--border); }
+    .overflow-section:last-child { border-bottom: none; }
+    .overflow-label { font-size: 9px; letter-spacing: 2px; color: var(--muted3); text-transform: uppercase;
+      padding: 4px 14px 6px; display: block; }
+    .overflow-item { display: flex; align-items: center; gap: 8px; width: 100%; background: none; border: none;
+      color: var(--text); font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 1px;
+      padding: 8px 14px; cursor: pointer; text-align: left; transition: background 0.1s; }
+    .overflow-item:hover { background: var(--surface2); }
+    .overflow-item.active { color: var(--now); }
+
+    /* theme swatches inside menu */
+    .theme-swatches { display: flex; gap: 6px; padding: 6px 14px 10px; flex-wrap: wrap; }
+    .theme-swatch { width: 36px; height: 30px; border-radius: 6px; cursor: pointer;
+      border: 2px solid transparent; transition: all 0.15s; display: flex; align-items: center;
+      justify-content: center; font-size: 8px; font-family: 'IBM Plex Mono', monospace;
+      font-weight: 600; text-transform: uppercase; }
+    .theme-swatch:hover, .theme-swatch.active { border-color: var(--text); }
+    .swatch-dark    { background: #0A0A0A; color: #D4FF4F; }
+    .swatch-light   { background: #F5F4F0; color: #1A1916; }
+    .swatch-warm    { background: #1A1410; color: #F0C040; }
+    .swatch-forest  { background: #0D1510; color: #A8E040; }
+    .swatch-purporg { background: #F0EEF5; color: #7040C8; }
+
     .view-toggle { display: flex; gap: 2px; background: var(--surface); border-radius: 7px; padding: 3px; border: 1px solid var(--border); }
-    .view-btn { background: none; border: none; border-radius: 5px; color: var(--muted3); font-family: var(--mono); font-size: 9px; letter-spacing: 2px; text-transform: uppercase; padding: 5px 11px; cursor: pointer; transition: all 0.15s; }
+    .view-btn { background: none; border: none; border-radius: 5px; color: var(--muted3);
+      font-family: 'IBM Plex Mono', monospace; font-size: 9px; letter-spacing: 2px; text-transform: uppercase;
+      padding: 5px 10px; cursor: pointer; transition: all 0.15s; }
     .view-btn.active { background: var(--surface2); color: var(--text); }
 
     /* ── Tabs ── */
     .tabs { display: flex; border-bottom: 1px solid var(--border); margin: 0 -20px; padding: 0 20px; }
-    .tab { background: none; border: none; border-bottom: 2px solid transparent; margin-bottom: -1px; padding: 9px 14px 10px; cursor: pointer; font-family: var(--mono); font-size: 10px; letter-spacing: 3px; color: var(--muted2); text-transform: uppercase; display: flex; align-items: center; gap: 6px; transition: all 0.15s; flex-shrink: 0; }
+    .tab { background: none; border: none; border-bottom: 2px solid transparent; margin-bottom: -1px;
+      padding: 9px 13px 10px; cursor: pointer; font-family: 'IBM Plex Mono', monospace; font-size: 10px;
+      letter-spacing: 3px; color: var(--muted2); text-transform: uppercase;
+      display: flex; align-items: center; gap: 6px; transition: all 0.15s; flex-shrink: 0; }
     .tab.active[data-tab="Now"]     { color: var(--now);     border-bottom-color: var(--now); }
     .tab.active[data-tab="Later"]   { color: var(--later);   border-bottom-color: var(--later); }
     .tab.active[data-tab="Waiting"] { color: var(--waiting); border-bottom-color: var(--waiting); }
-    .badge { font-size: 9px; padding: 1px 5px; border-radius: 8px; font-weight: 600; letter-spacing: 0; background: var(--border2); color: var(--muted2); transition: all 0.15s; }
+    .badge { font-size: 9px; padding: 1px 5px; border-radius: 8px; font-weight: 600; letter-spacing: 0;
+      background: var(--border2); color: var(--muted2); transition: all 0.15s; }
     .tab.active[data-tab="Now"]     .badge { background: var(--now);     color: #0A0A0A; }
     .tab.active[data-tab="Later"]   .badge { background: var(--later);   color: #0A0A0A; }
     .tab.active[data-tab="Waiting"] .badge { background: var(--waiting); color: #0A0A0A; }
 
-    /* ── Add row (status view) ── */
+    /* ── Add row ── */
     .add-row { padding: 10px 20px; display: flex; gap: 8px; flex-shrink: 0; border-bottom: 1px solid var(--border); }
-    .add-input { flex: 1; background: var(--surface); border: 1px solid var(--border2); border-radius: 8px; color: var(--text); font-family: var(--sans); font-size: 14px; padding: 9px 13px; outline: none; transition: border-color 0.15s; -webkit-appearance: none; }
+    .add-input { flex: 1; background: var(--surface); border: 1px solid var(--border2); border-radius: 8px;
+      color: var(--text); font-family: 'IBM Plex Sans', sans-serif; font-size: 14px; padding: 9px 13px;
+      outline: none; transition: border-color 0.15s; -webkit-appearance: none; }
     .add-input::placeholder { color: var(--muted3); }
     .add-input:focus { border-color: var(--active-accent, var(--now)); }
-    .add-submit { width: 40px; background: var(--active-accent, var(--now)); border: none; border-radius: 8px; color: #0A0A0A; font-size: 20px; font-weight: 600; cursor: pointer; flex-shrink: 0; transition: opacity 0.15s; }
+    .add-submit { width: 40px; background: var(--active-accent, var(--now)); border: none; border-radius: 8px;
+      color: #0A0A0A; font-size: 20px; font-weight: 600; cursor: pointer; flex-shrink: 0; transition: opacity 0.15s; }
     .add-submit:active { opacity: 0.7; }
 
     /* ── Project view header ── */
-    .proj-view-header { display: flex; align-items: center; justify-content: space-between; padding: 10px 20px; border-bottom: 1px solid var(--border); flex-shrink: 0; }
-    .new-proj-btn { background: none; border: 1px solid var(--border2); border-radius: 6px; color: var(--muted2); font-family: var(--mono); font-size: 10px; letter-spacing: 2px; text-transform: uppercase; padding: 6px 13px; cursor: pointer; transition: all 0.15s; }
+    .proj-view-header { display: flex; align-items: center; justify-content: space-between;
+      padding: 8px 20px; border-bottom: 1px solid var(--border); flex-shrink: 0; gap: 8px; flex-wrap: wrap; }
+    .proj-view-left { display: flex; align-items: center; gap: 8px; }
+    .new-proj-btn { background: none; border: 1px solid var(--border2); border-radius: 6px; color: var(--muted2);
+      font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: 2px; text-transform: uppercase;
+      padding: 5px 12px; cursor: pointer; transition: all 0.15s; }
     .new-proj-btn:hover { border-color: var(--now); color: var(--now); }
+    .sort-select { background: var(--surface2); border: 1px solid var(--border2); border-radius: 6px;
+      color: var(--muted2); font-family: 'IBM Plex Mono', monospace; font-size: 9px; letter-spacing: 1px;
+      padding: 5px 8px; cursor: pointer; outline: none; -webkit-appearance: none; appearance: none; }
 
     /* ── Review panel ── */
-    .review-panel { margin: 8px 20px; background: var(--surface); border: 1px solid var(--border2); border-radius: 10px; overflow: hidden; flex-shrink: 0; display: none; }
+    .review-panel { margin: 6px 20px; background: var(--surface); border: 1px solid var(--border2);
+      border-radius: 10px; overflow: hidden; flex-shrink: 0; display: none; }
     .review-panel.visible { display: block; }
-    .review-header { display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; border-bottom: 1px solid var(--border); }
+    .review-header { display: flex; align-items: center; justify-content: space-between;
+      padding: 9px 13px; border-bottom: 1px solid var(--border); }
     .review-title { font-size: 10px; letter-spacing: 3px; color: var(--now); text-transform: uppercase; }
-    .review-close { background: none; border: none; color: var(--muted2); cursor: pointer; font-size: 16px; line-height: 1; padding: 0 4px; }
-    .review-body { padding: 12px 14px; max-height: 240px; overflow-y: auto; font-family: var(--sans); font-size: 13px; line-height: 1.6; }
+    .review-close { background: none; border: none; color: var(--muted2); cursor: pointer; font-size: 16px; line-height: 1; }
+    .review-body { padding: 11px 13px; max-height: 230px; overflow-y: auto;
+      font-family: 'IBM Plex Sans', sans-serif; font-size: 13px; line-height: 1.6; }
     .sug-item { display: flex; align-items: flex-start; gap: 8px; padding: 7px 0; border-bottom: 1px solid var(--border); }
     .sug-item:last-child { border-bottom: none; }
-    .sug-tab { font-family: var(--mono); font-size: 9px; letter-spacing: 1px; padding: 2px 6px; border-radius: 8px; flex-shrink: 0; margin-top: 2px; text-transform: uppercase; }
-    .sug-tab.Now     { background: rgba(212,255,79,0.12); color: var(--now); }
-    .sug-tab.Later   { background: rgba(79,195,255,0.12); color: var(--later); }
-    .sug-tab.Waiting { background: rgba(255,140,75,0.12); color: var(--waiting); }
+    .sug-tab { font-family: 'IBM Plex Mono', monospace; font-size: 9px; letter-spacing: 1px; padding: 2px 6px;
+      border-radius: 8px; flex-shrink: 0; margin-top: 2px; text-transform: uppercase; }
+    .sug-tab.Now     { background: rgba(212,255,79,0.15); color: var(--now); }
+    .sug-tab.Later   { background: rgba(79,195,255,0.15); color: var(--later); }
+    .sug-tab.Waiting { background: rgba(255,140,75,0.15); color: var(--waiting); }
     .sug-text { flex: 1; font-size: 13px; color: var(--text); }
-    .add-sug { background: none; border: 1px solid var(--border2); border-radius: 4px; color: var(--muted2); font-family: var(--mono); font-size: 10px; padding: 3px 8px; cursor: pointer; flex-shrink: 0; margin-top: 1px; transition: all 0.15s; }
+    .add-sug { background: none; border: 1px solid var(--border2); border-radius: 4px; color: var(--muted2);
+      font-family: 'IBM Plex Mono', monospace; font-size: 10px; padding: 3px 8px; cursor: pointer;
+      flex-shrink: 0; margin-top: 1px; transition: all 0.15s; }
     .add-sug:hover { border-color: var(--now); color: var(--now); }
     .add-sug.added { color: var(--muted3); cursor: default; }
 
-    /* ── Scroll area ── */
+    /* ── List area ── */
     .list-area { flex: 1; overflow-y: auto; padding: 6px 20px; -webkit-overflow-scrolling: touch; }
     .empty-state { text-align: center; color: var(--muted3); font-size: 11px; letter-spacing: 3px; padding: 48px 0; }
 
-    /* ── Status view task rows ── */
-    .s-task { display: flex; align-items: flex-start; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--border); animation: fadeIn 0.2s ease; }
-    @keyframes fadeIn { from { opacity: 0; transform: translateY(-3px); } to { opacity: 1; } }
-    .s-task.done-row { opacity: 0.35; }
+    /* ── Status view ── */
+    .s-task { display: flex; align-items: flex-start; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--border); animation: fadeIn 0.18s ease; }
+    @keyframes fadeIn { from { opacity:0; transform: translateY(-3px); } to { opacity:1; transform:none; } }
+    .s-task.done-row { opacity: 1; }
+    .s-task.done-row .s-task-text { text-decoration: line-through; color: var(--done-text); }
+    .s-task.done-row .chk { background: var(--border2); }
 
-    .chk { width: 17px; height: 17px; border: 1.5px solid var(--border2); border-radius: 4px; background: none; cursor: pointer; flex-shrink: 0; margin-top: 2px; display: flex; align-items: center; justify-content: center; transition: all 0.15s; font-size: 10px; color: var(--muted2); }
-    .done-row .chk { background: var(--border2); }
-
+    .chk { width: 17px; height: 17px; border: 1.5px solid var(--border2); border-radius: 4px; background: none;
+      cursor: pointer; flex-shrink: 0; margin-top: 2px; display: flex; align-items: center; justify-content: center;
+      transition: all 0.15s; font-size: 10px; color: var(--muted2); }
     .s-task-main { flex: 1; min-width: 0; }
     .s-task-line { display: flex; align-items: baseline; gap: 7px; flex-wrap: wrap; }
-    .s-task-text { font-size: 14px; line-height: 1.5; font-family: var(--sans); word-break: break-word; cursor: text; color: var(--text); }
-    .done-row .s-task-text { text-decoration: line-through; color: var(--muted2); }
-
-    .proj-chip { font-family: var(--mono); font-size: 9px; letter-spacing: 1px; padding: 2px 7px; border-radius: 10px; background: var(--surface2); color: var(--muted2); white-space: nowrap; flex-shrink: 0; }
-    .parent-chip { font-family: var(--mono); font-size: 9px; letter-spacing: 0px; padding: 2px 7px; border-radius: 10px; background: var(--surface2); color: var(--muted3); white-space: nowrap; flex-shrink: 0; font-style: italic; }
-
-    .s-subs { margin-top: 5px; }
+    .s-task-text { font-size: 14px; line-height: 1.5; font-family: 'IBM Plex Sans', sans-serif;
+      word-break: break-word; cursor: text; color: var(--text); }
+    .proj-chip { font-family: 'IBM Plex Mono', monospace; font-size: 9px; letter-spacing: 1px; padding: 2px 7px;
+      border-radius: 10px; background: var(--surface2); color: var(--muted2); white-space: nowrap; flex-shrink: 0; }
+    .s-subs { margin-top: 4px; }
     .s-sub-row { display: flex; align-items: flex-start; gap: 7px; padding: 4px 0; border-top: 1px solid var(--border); }
-    .sub-chk { width: 13px; height: 13px; border: 1px solid var(--border2); border-radius: 3px; background: none; cursor: pointer; flex-shrink: 0; margin-top: 2px; display: flex; align-items: center; justify-content: center; font-size: 8px; color: var(--muted2); }
+    .sub-chk { width: 13px; height: 13px; border: 1px solid var(--border2); border-radius: 3px; background: none;
+      cursor: pointer; flex-shrink: 0; margin-top: 2px; display: flex; align-items: center; justify-content: center;
+      font-size: 8px; color: var(--muted2); }
     .s-sub-row.done-sub .sub-chk { background: var(--border2); }
-    .s-sub-text { font-size: 13px; font-family: var(--sans); color: var(--muted); flex: 1; line-height: 1.4; }
-    .s-sub-row.done-sub .s-sub-text { text-decoration: line-through; color: var(--muted3); }
-
-    .expand-btn { background: none; border: none; color: var(--muted3); font-size: 10px; cursor: pointer; padding: 3px 0 1px; font-family: var(--mono); letter-spacing: 1px; display: flex; align-items: center; gap: 4px; }
+    .s-sub-text { font-size: 13px; font-family: 'IBM Plex Sans', sans-serif; color: var(--muted); flex: 1; line-height: 1.4; }
+    .s-sub-row.done-sub .s-sub-text { text-decoration: line-through; color: var(--done-text); }
+    .expand-btn { background: none; border: none; color: var(--muted3); font-size: 10px; cursor: pointer;
+      padding: 3px 0 1px; font-family: 'IBM Plex Mono', monospace; letter-spacing: 1px;
+      display: flex; align-items: center; gap: 4px; }
     .expand-btn:hover { color: var(--muted2); }
-
     .s-actions { display: flex; gap: 2px; flex-shrink: 0; margin-top: 1px; }
-    .icon-btn { background: none; border: none; cursor: pointer; color: var(--muted3); font-size: 14px; padding: 2px 4px; line-height: 1; border-radius: 4px; transition: color 0.15s; font-family: var(--mono); }
-    .icon-btn:hover { color: var(--muted); }
+    .icon-btn { background: none; border: none; cursor: pointer; color: var(--muted3); font-size: 14px;
+      padding: 2px 4px; line-height: 1; border-radius: 4px; transition: color 0.15s; font-family: 'IBM Plex Mono', monospace; }
+    .icon-btn:hover { color: var(--muted2); }
     .icon-btn.del:hover { color: var(--danger); }
     .move-wrap { position: relative; }
-    .move-menu { position: absolute; right: 0; top: 100%; z-index: 100; background: #1C1C1C; border: 1px solid var(--border2); border-radius: 8px; overflow: hidden; min-width: 110px; box-shadow: 0 8px 24px rgba(0,0,0,0.6); }
-    .move-menu button { display: block; width: 100%; background: none; border: none; font-family: var(--mono); font-size: 10px; letter-spacing: 2px; padding: 10px 16px; cursor: pointer; text-align: left; text-transform: uppercase; transition: background 0.1s; color: var(--text); }
+    .move-menu { position: absolute; right: 0; top: 100%; z-index: 100; background: var(--move-menu-bg);
+      border: 1px solid var(--border2); border-radius: 8px; overflow: hidden; min-width: 110px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.3); }
+    .move-menu button { display: block; width: 100%; background: none; border: none;
+      font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: 2px;
+      padding: 10px 16px; cursor: pointer; text-align: left; text-transform: uppercase;
+      transition: background 0.1s; color: var(--text); }
     .move-menu button:hover { background: var(--border2); }
 
-    .done-toggle { background: none; border: none; color: var(--muted2); font-family: var(--mono); font-size: 10px; letter-spacing: 3px; text-transform: uppercase; cursor: pointer; display: flex; align-items: center; gap: 8px; padding: 14px 0 8px; }
+    .done-toggle { background: none; border: none; color: var(--muted2); font-family: 'IBM Plex Mono', monospace;
+      font-size: 10px; letter-spacing: 3px; text-transform: uppercase; cursor: pointer;
+      display: flex; align-items: center; gap: 8px; padding: 14px 0 8px; }
     .done-toggle:hover { color: var(--muted); }
-    .clear-done { background: none; border: 1px solid var(--border2); border-radius: 4px; color: var(--muted2); font-family: var(--mono); font-size: 10px; letter-spacing: 2px; padding: 6px 12px; cursor: pointer; text-transform: uppercase; margin: 6px 0 16px; transition: all 0.15s; }
+    .clear-done { background: none; border: 1px solid var(--border2); border-radius: 4px; color: var(--muted2);
+      font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: 2px; padding: 6px 12px;
+      cursor: pointer; text-transform: uppercase; margin: 6px 0 16px; transition: all 0.15s; }
     .clear-done:hover { border-color: var(--danger); color: var(--danger); }
 
-    .inline-edit { flex: 1; background: var(--surface); border: 1px solid var(--now); border-radius: 4px; color: var(--text); font-family: var(--sans); font-size: 14px; padding: 3px 8px; outline: none; width: 100%; }
+    .inline-edit { flex: 1; background: var(--surface); border: 1px solid var(--now); border-radius: 4px;
+      color: var(--text); font-family: 'IBM Plex Sans', sans-serif; font-size: 14px; padding: 3px 8px;
+      outline: none; width: 100%; }
 
     /* ── Project view ── */
-    .proj-card { border: 1px solid var(--border); border-radius: 10px; margin-bottom: 12px; overflow: hidden; animation: fadeIn 0.2s ease; }
-    .proj-card-hdr { display: flex; align-items: center; gap: 10px; padding: 11px 14px; background: var(--surface); border-bottom: 1px solid var(--border); cursor: pointer; user-select: none; }
-    .proj-emoji { font-size: 18px; flex-shrink: 0; }
+    .proj-card { border: 1px solid var(--border); border-radius: 10px; margin-bottom: 12px;
+      overflow: hidden; animation: fadeIn 0.18s ease; }
+    .proj-card-hdr { display: flex; align-items: center; gap: 8px; padding: 10px 12px;
+      background: var(--surface); border-bottom: 1px solid var(--border); cursor: pointer; user-select: none; }
+    .proj-emoji { font-size: 17px; flex-shrink: 0; }
     .proj-info { flex: 1; min-width: 0; }
-    .proj-name-text { font-size: 14px; font-family: var(--sans); font-weight: 500; color: var(--text); }
+    .proj-name-text { font-size: 14px; font-family: 'IBM Plex Sans', sans-serif; font-weight: 500; color: var(--text); }
     .proj-meta-text { font-size: 10px; color: var(--muted2); letter-spacing: 1px; margin-top: 1px; }
-    .proj-hdr-btn { background: none; border: none; color: var(--muted3); font-size: 12px; cursor: pointer; padding: 4px; transition: color 0.15s; }
+    .proj-hdr-btn { background: none; border: none; color: var(--muted3); font-size: 12px;
+      cursor: pointer; padding: 3px 5px; transition: color 0.15s; flex-shrink: 0; }
     .proj-hdr-btn:hover { color: var(--muted2); }
+    .reorder-btns { display: flex; flex-direction: column; gap: 1px; flex-shrink: 0; }
+    .reorder-btn { background: none; border: none; color: var(--muted3); font-size: 10px;
+      cursor: pointer; padding: 1px 4px; line-height: 1; transition: color 0.15s; }
+    .reorder-btn:hover { color: var(--muted2); }
+    .reorder-btn:disabled { opacity: 0.2; cursor: default; }
 
-    .proj-body { padding: 6px 14px 12px; }
+    .proj-body { padding: 4px 12px 12px; }
+
+    /* done section in project view */
+    .proj-done-toggle { background: none; border: none; color: var(--muted3);
+      font-family: 'IBM Plex Mono', monospace; font-size: 9px; letter-spacing: 2px; text-transform: uppercase;
+      cursor: pointer; display: flex; align-items: center; gap: 6px; padding: 10px 0 6px; }
+    .proj-done-toggle:hover { color: var(--muted2); }
 
     /* parent task row */
     .p-task { border-bottom: 1px solid var(--border); }
     .p-task:last-of-type { border-bottom: none; }
-    .p-task-hdr { display: flex; align-items: flex-start; gap: 8px; padding: 8px 0 6px; }
-    .p-task-hdr.done-row { opacity: 0.4; }
-    .p-expand { background: none; border: none; color: var(--muted3); font-size: 11px; cursor: pointer; padding: 2px; flex-shrink: 0; margin-top: 2px; width: 16px; text-align: center; transition: color 0.15s; }
+    .p-task-hdr { display: flex; align-items: flex-start; gap: 7px; padding: 7px 0 5px; }
+    .p-task-hdr.done-row .p-task-text { text-decoration: line-through; color: var(--done-text); font-weight: 400; }
+    .p-task-hdr.done-row .p-chk { background: var(--border2); }
+    .p-expand { background: none; border: none; color: var(--muted3); font-size: 11px; cursor: pointer;
+      padding: 2px; flex-shrink: 0; margin-top: 2px; width: 16px; text-align: center; transition: color 0.15s; }
     .p-expand:hover { color: var(--muted2); }
-    .p-chk { width: 17px; height: 17px; border: 1.5px solid var(--border2); border-radius: 4px; background: none; cursor: pointer; flex-shrink: 0; margin-top: 2px; display: flex; align-items: center; justify-content: center; font-size: 10px; color: var(--muted2); transition: all 0.15s; }
-    .done-row .p-chk { background: var(--border2); }
-    .p-task-text { flex: 1; font-size: 14px; font-family: var(--sans); line-height: 1.5; cursor: text; word-break: break-word; color: var(--text); font-weight: 500; }
-    .done-row .p-task-text { text-decoration: line-through; color: var(--muted2); font-weight: 400; }
-    .status-pill { font-family: var(--mono); font-size: 9px; letter-spacing: 1px; padding: 2px 6px; border-radius: 8px; flex-shrink: 0; margin-top: 4px; cursor: pointer; transition: all 0.15s; user-select: none; }
+    .p-chk { width: 16px; height: 16px; border: 1.5px solid var(--border2); border-radius: 4px; background: none;
+      cursor: pointer; flex-shrink: 0; margin-top: 3px; display: flex; align-items: center; justify-content: center;
+      font-size: 10px; color: var(--muted2); transition: all 0.15s; }
+    .p-task-text { flex: 1; font-size: 14px; font-family: 'IBM Plex Sans', sans-serif; line-height: 1.5;
+      cursor: text; word-break: break-word; color: var(--text); font-weight: 500; }
+    .status-pill { font-family: 'IBM Plex Mono', monospace; font-size: 9px; letter-spacing: 1px; padding: 2px 6px;
+      border-radius: 8px; flex-shrink: 0; margin-top: 4px; cursor: pointer; transition: all 0.15s; user-select: none; }
     .status-pill.N { background: rgba(212,255,79,0.15); color: var(--now); }
     .status-pill.L { background: rgba(79,195,255,0.15); color: var(--later); }
     .status-pill.W { background: rgba(255,140,75,0.15); color: var(--waiting); }
     .status-pill.none { background: var(--surface2); color: var(--muted3); }
-    .p-del { background: none; border: none; color: var(--muted3); font-size: 15px; cursor: pointer; padding: 2px 4px; line-height: 1; transition: color 0.15s; flex-shrink: 0; margin-top: 1px; }
+    .p-del { background: none; border: none; color: var(--muted3); font-size: 15px; cursor: pointer;
+      padding: 2px 3px; line-height: 1; transition: color 0.15s; flex-shrink: 0; margin-top: 1px; }
     .p-del:hover { color: var(--danger); }
 
     /* sub-task rows */
-    .sub-list { padding-left: 26px; border-top: 1px solid var(--border); }
-    .sub-row { display: flex; align-items: flex-start; gap: 8px; padding: 6px 0; border-bottom: 1px solid var(--border); }
+    .sub-list { padding-left: 24px; border-top: 1px solid var(--border); }
+    .sub-row { display: flex; align-items: flex-start; gap: 7px; padding: 5px 0; border-bottom: 1px solid var(--border); }
     .sub-row:last-of-type { border-bottom: none; }
-    .sub-row.done-row { opacity: 0.4; }
-    .sub-chk2 { width: 14px; height: 14px; border: 1px solid var(--border2); border-radius: 3px; background: none; cursor: pointer; flex-shrink: 0; margin-top: 2px; display: flex; align-items: center; justify-content: center; font-size: 8px; color: var(--muted2); transition: all 0.15s; }
-    .done-row .sub-chk2 { background: var(--border2); }
-    .sub-text { flex: 1; font-size: 13px; font-family: var(--sans); color: var(--text); line-height: 1.45; cursor: text; word-break: break-word; }
-    .done-row .sub-text { text-decoration: line-through; color: var(--muted2); }
-    .sub-pill { font-family: var(--mono); font-size: 8px; letter-spacing: 1px; padding: 1px 5px; border-radius: 6px; flex-shrink: 0; margin-top: 3px; cursor: pointer; }
+    .sub-row.done-row .sub-text { text-decoration: line-through; color: var(--done-text); }
+    .sub-row.done-row .sub-chk2 { background: var(--border2); }
+    .sub-chk2 { width: 13px; height: 13px; border: 1px solid var(--border2); border-radius: 3px; background: none;
+      cursor: pointer; flex-shrink: 0; margin-top: 2px; display: flex; align-items: center; justify-content: center;
+      font-size: 8px; color: var(--muted2); transition: all 0.15s; }
+    .sub-text { flex: 1; font-size: 13px; font-family: 'IBM Plex Sans', sans-serif; color: var(--text);
+      line-height: 1.45; cursor: text; word-break: break-word; }
+    .sub-pill { font-family: 'IBM Plex Mono', monospace; font-size: 8px; letter-spacing: 1px; padding: 1px 5px;
+      border-radius: 6px; flex-shrink: 0; margin-top: 3px; cursor: pointer; }
     .sub-pill.N { background: rgba(212,255,79,0.15); color: var(--now); }
     .sub-pill.L { background: rgba(79,195,255,0.15); color: var(--later); }
     .sub-pill.W { background: rgba(255,140,75,0.15); color: var(--waiting); }
     .sub-pill.none { background: var(--surface2); color: var(--muted3); }
-    .sub-del { background: none; border: none; color: var(--muted3); font-size: 13px; cursor: pointer; padding: 1px 3px; transition: color 0.15s; flex-shrink: 0; }
+    .sub-del { background: none; border: none; color: var(--muted3); font-size: 13px; cursor: pointer;
+      padding: 1px 3px; transition: color 0.15s; flex-shrink: 0; }
     .sub-del:hover { color: var(--danger); }
 
-    /* grand-child task rows (level 3) */
-    .gc-list { padding-left: 20px; border-top: 1px solid var(--border); }
+    /* grand-child rows */
+    .gc-list { padding-left: 18px; border-top: 1px solid var(--border); }
     .gc-row { display: flex; align-items: flex-start; gap: 7px; padding: 5px 0; border-bottom: 1px solid var(--border); }
     .gc-row:last-of-type { border-bottom: none; }
-    .gc-row.done-row { opacity: 0.4; }
-    .gc-chk { width: 12px; height: 12px; border: 1px solid var(--border2); border-radius: 3px; background: none; cursor: pointer; flex-shrink: 0; margin-top: 2px; display: flex; align-items: center; justify-content: center; font-size: 7px; color: var(--muted2); }
-    .done-row .gc-chk { background: var(--border2); }
-    .gc-text { flex: 1; font-size: 12px; font-family: var(--sans); color: var(--muted); line-height: 1.4; cursor: text; word-break: break-word; }
-    .done-row .gc-text { text-decoration: line-through; color: var(--muted3); }
-    .gc-del { background: none; border: none; color: var(--muted3); font-size: 12px; cursor: pointer; padding: 1px 3px; transition: color 0.15s; }
+    .gc-row.done-row .gc-text { text-decoration: line-through; color: var(--done-text); }
+    .gc-row.done-row .gc-chk { background: var(--border2); }
+    .gc-chk { width: 12px; height: 12px; border: 1px solid var(--border2); border-radius: 3px; background: none;
+      cursor: pointer; flex-shrink: 0; margin-top: 2px; display: flex; align-items: center; justify-content: center;
+      font-size: 7px; color: var(--muted2); }
+    .gc-text { flex: 1; font-size: 12px; font-family: 'IBM Plex Sans', sans-serif; color: var(--muted);
+      line-height: 1.4; cursor: text; word-break: break-word; }
+    .gc-del { background: none; border: none; color: var(--muted3); font-size: 12px; cursor: pointer;
+      padding: 1px 3px; transition: color 0.15s; }
     .gc-del:hover { color: var(--danger); }
 
-    /* add inputs in project view */
+    /* add inputs */
     .add-task-row { display: flex; gap: 7px; margin-top: 8px; }
-    .add-task-inp { flex: 1; background: var(--surface2); border: 1px solid var(--border2); border-radius: 7px; color: var(--text); font-family: var(--sans); font-size: 13px; padding: 8px 11px; outline: none; transition: border-color 0.15s; -webkit-appearance: none; }
+    .add-task-inp { flex: 1; background: var(--surface2); border: 1px solid var(--border2);
+      border-radius: 7px; color: var(--text); font-family: 'IBM Plex Sans', sans-serif; font-size: 13px;
+      padding: 7px 10px; outline: none; transition: border-color 0.15s; -webkit-appearance: none; }
     .add-task-inp::placeholder { color: var(--muted3); }
-    .add-task-inp:focus { border-color: var(--border2); }
-    .add-task-inp.tall { min-height: 80px; resize: none; line-height: 1.5; font-family: var(--sans); overflow: hidden; }
-    .add-task-btn { background: var(--surface2); border: 1px solid var(--border2); border-radius: 7px; color: var(--muted2); font-size: 16px; width: 34px; cursor: pointer; flex-shrink: 0; transition: all 0.15s; display: flex; align-items: center; justify-content: center; }
+    .add-task-inp.tall { min-height: 80px; resize: none; line-height: 1.5; overflow: hidden; }
+    .add-task-btn { background: var(--surface2); border: 1px solid var(--border2); border-radius: 7px;
+      color: var(--muted2); font-size: 16px; width: 32px; cursor: pointer; flex-shrink: 0;
+      transition: all 0.15s; display: flex; align-items: center; justify-content: center; }
     .add-task-btn:hover { border-color: var(--now); color: var(--now); }
-    .hint { font-size: 10px; color: var(--muted3); letter-spacing: 1px; margin-top: 4px; font-family: var(--mono); }
+    .hint { font-size: 10px; color: var(--muted3); letter-spacing: 1px; margin-top: 3px; font-family: 'IBM Plex Mono', monospace; }
 
-    /* bulk entry toggle */
-    .bulk-toggle { background: var(--surface2); border: 1px solid var(--border2); border-radius: 6px; color: var(--muted); font-family: var(--mono); font-size: 10px; letter-spacing: 2px; text-transform: uppercase; cursor: pointer; padding: 7px 12px; margin-top: 8px; transition: all 0.15s; display: inline-flex; align-items: center; gap: 6px; }
+    .bulk-toggle { background: var(--surface2); border: 1px solid var(--border2); border-radius: 6px;
+      color: var(--muted2); font-family: 'IBM Plex Mono', monospace; font-size: 9px; letter-spacing: 2px;
+      text-transform: uppercase; cursor: pointer; padding: 6px 11px; margin-top: 7px;
+      transition: all 0.15s; display: inline-flex; align-items: center; gap: 5px; }
     .bulk-toggle:hover { border-color: var(--now); color: var(--now); }
     .bulk-area { margin-top: 6px; display: none; }
     .bulk-area.open { display: block; }
-    .bulk-save-btn { margin-top: 6px; background: none; border: 1px solid var(--border2); border-radius: 6px; color: var(--muted2); font-family: var(--mono); font-size: 10px; letter-spacing: 2px; text-transform: uppercase; padding: 7px 14px; cursor: pointer; transition: all 0.15s; }
+    .bulk-save-btn { margin-top: 6px; background: none; border: 1px solid var(--border2); border-radius: 6px;
+      color: var(--muted2); font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: 2px;
+      text-transform: uppercase; padding: 7px 13px; cursor: pointer; transition: all 0.15s; }
     .bulk-save-btn:hover { border-color: var(--now); color: var(--now); }
 
     /* ── Modals ── */
-    .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.82); display: flex; align-items: center; justify-content: center; z-index: 200; padding: 20px; }
-    .modal-card { background: var(--surface); border: 1px solid var(--border2); border-radius: 14px; padding: 22px; max-width: 380px; width: 100%; }
+    .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.75); display: flex;
+      align-items: center; justify-content: center; z-index: 200; padding: 20px; }
+    .modal-card { background: var(--surface); border: 1px solid var(--border2); border-radius: 14px;
+      padding: 22px; max-width: 380px; width: 100%; }
     .modal-title { font-size: 11px; letter-spacing: 3px; color: var(--now); margin-bottom: 16px; text-transform: uppercase; }
-    .modal-label { font-size: 10px; letter-spacing: 2px; color: var(--muted2); text-transform: uppercase; margin-bottom: 5px; display: block; }
-    .modal-inp { width: 100%; background: var(--bg); border: 1px solid var(--border2); border-radius: 6px; color: var(--text); font-family: var(--sans); font-size: 14px; padding: 9px 12px; outline: none; margin-bottom: 12px; -webkit-appearance: none; }
+    .modal-label { font-size: 10px; letter-spacing: 2px; color: var(--muted2); text-transform: uppercase;
+      margin-bottom: 5px; display: block; }
+    .modal-inp { width: 100%; background: var(--bg); border: 1px solid var(--border2); border-radius: 6px;
+      color: var(--text); font-family: 'IBM Plex Sans', sans-serif; font-size: 14px; padding: 9px 11px;
+      outline: none; margin-bottom: 12px; -webkit-appearance: none; }
     .modal-inp:focus { border-color: var(--now); }
     .modal-row { display: flex; gap: 10px; }
     .modal-row .modal-inp { flex: 1; }
     .modal-actions { display: flex; gap: 8px; margin-top: 4px; }
-    .modal-save { flex: 1; background: var(--now); border: none; border-radius: 8px; color: #0A0A0A; font-family: var(--mono); font-size: 11px; letter-spacing: 2px; padding: 11px; cursor: pointer; text-transform: uppercase; font-weight: 600; }
-    .modal-cancel { background: none; border: 1px solid var(--border2); border-radius: 8px; color: var(--muted2); font-family: var(--mono); font-size: 11px; letter-spacing: 1px; padding: 11px 14px; cursor: pointer; }
-    .modal-del { background: none; border: 1px solid var(--border2); border-radius: 8px; color: var(--danger); font-family: var(--mono); font-size: 11px; padding: 11px 14px; cursor: pointer; transition: all 0.15s; }
+    .modal-save { flex: 1; background: var(--now); border: none; border-radius: 8px; color: #0A0A0A;
+      font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 2px; padding: 11px;
+      cursor: pointer; text-transform: uppercase; font-weight: 600; }
+    .modal-cancel { background: none; border: 1px solid var(--border2); border-radius: 8px; color: var(--muted2);
+      font-family: 'IBM Plex Mono', monospace; font-size: 11px; padding: 11px 13px; cursor: pointer; }
+    .modal-del { background: none; border: 1px solid var(--border2); border-radius: 8px; color: var(--danger);
+      font-family: 'IBM Plex Mono', monospace; font-size: 11px; padding: 11px 13px; cursor: pointer;
+      transition: all 0.15s; }
     .modal-del:hover { background: rgba(255,75,75,0.1); }
 
-    .key-panel { position: fixed; inset: 0; background: rgba(0,0,0,0.88); display: flex; align-items: center; justify-content: center; z-index: 300; padding: 20px; }
-    .key-card { background: var(--surface); border: 1px solid var(--border2); border-radius: 12px; padding: 22px; max-width: 360px; width: 100%; }
-    .key-title { font-size: 11px; letter-spacing: 3px; color: var(--now); margin-bottom: 9px; text-transform: uppercase; }
-    .key-desc { font-family: var(--sans); font-size: 13px; color: var(--muted2); line-height: 1.6; margin-bottom: 14px; }
-    .key-inp { width: 100%; background: var(--bg); border: 1px solid var(--border2); border-radius: 6px; color: var(--text); font-family: var(--mono); font-size: 12px; padding: 9px 12px; outline: none; margin-bottom: 11px; }
+    .key-panel { position: fixed; inset: 0; background: rgba(0,0,0,0.85); display: flex;
+      align-items: center; justify-content: center; z-index: 300; padding: 20px; }
+    .key-card { background: var(--surface); border: 1px solid var(--border2); border-radius: 12px;
+      padding: 22px; max-width: 360px; width: 100%; }
+    .key-title { font-size: 11px; letter-spacing: 3px; color: var(--now); margin-bottom: 8px; text-transform: uppercase; }
+    .key-desc { font-family: 'IBM Plex Sans', sans-serif; font-size: 13px; color: var(--muted2); line-height: 1.6; margin-bottom: 14px; }
+    .key-inp { width: 100%; background: var(--bg); border: 1px solid var(--border2); border-radius: 6px;
+      color: var(--text); font-family: 'IBM Plex Mono', monospace; font-size: 12px; padding: 9px 11px;
+      outline: none; margin-bottom: 11px; }
     .key-inp:focus { border-color: var(--now); }
-    .key-save { width: 100%; background: var(--now); border: none; border-radius: 6px; color: #0A0A0A; font-family: var(--mono); font-size: 11px; letter-spacing: 2px; padding: 11px; cursor: pointer; text-transform: uppercase; font-weight: 600; }
+    .key-save { width: 100%; background: var(--now); border: none; border-radius: 6px; color: #0A0A0A;
+      font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 2px; padding: 11px;
+      cursor: pointer; text-transform: uppercase; font-weight: 600; }
 
     .spacer { height: 32px; }
   </style>
@@ -258,12 +406,11 @@
 <div id="app">
   <div class="topbar">
     <div class="topbar-row">
-      <div style="display:flex;align-items:center;gap:10px;">
+      <div class="topbar-left">
         <span class="wordmark">Tasks</span>
         <div class="sync-indicator"><div class="sync-dot" id="syncDot"></div><span id="syncLabel"></span></div>
-        <button onclick="backupData()" title="Download backup" style="background:none;border:none;color:var(--muted3);font-size:12px;cursor:pointer;padding:2px 4px;font-family:var(--mono);transition:color 0.15s;" onmouseover="this.style.color='var(--muted)'" onmouseout="this.style.color='var(--muted3)'">⬇ backup</button>
       </div>
-      <div class="top-actions">
+      <div class="topbar-right">
         <button class="review-btn" id="reviewBtn" onclick="startReview()">
           <div class="spinner"></div><span class="btn-label">☀ Review</span>
         </button>
@@ -271,6 +418,7 @@
           <button class="view-btn active" id="vbtnStatus" onclick="setView('status')">Status</button>
           <button class="view-btn" id="vbtnProject" onclick="setView('project')">Projects</button>
         </div>
+        <button class="overflow-btn" onclick="toggleOverflow(event)">···</button>
       </div>
     </div>
     <div class="tabs" id="statusTabs">
@@ -280,6 +428,24 @@
     </div>
   </div>
 
+  <!-- Overflow menu -->
+  <div class="overflow-menu" id="overflowMenu" onclick="event.stopPropagation()">
+    <div class="overflow-section">
+      <span class="overflow-label">Theme</span>
+      <div class="theme-swatches">
+        <div class="theme-swatch swatch-dark"    onclick="setTheme('dark')"       id="sw-dark"    title="Dark">D</div>
+        <div class="theme-swatch swatch-light"   onclick="setTheme('light')"      id="sw-light"   title="Light">L</div>
+        <div class="theme-swatch swatch-warm"    onclick="setTheme('warm')"       id="sw-warm"    title="Warm">W</div>
+        <div class="theme-swatch swatch-forest"  onclick="setTheme('forest')"     id="sw-forest"  title="Forest">F</div>
+        <div class="theme-swatch swatch-purporg" onclick="setTheme('purporange')" id="sw-purporg" title="Purple">P</div>
+      </div>
+    </div>
+    <div class="overflow-section">
+      <button class="overflow-item" onclick="backupData();closeOverflow()">⬇ Download backup</button>
+    </div>
+  </div>
+
+  <!-- Review panel -->
   <div class="review-panel" id="reviewPanel">
     <div class="review-header">
       <span class="review-title">Morning Review</span>
@@ -288,13 +454,22 @@
     <div class="review-body" id="reviewBody"></div>
   </div>
 
+  <!-- Add row (status view) -->
   <div class="add-row" id="addRow">
     <input class="add-input" id="addInput" placeholder="Add task… #N #L #W" autocomplete="off" autocorrect="off" />
     <button class="add-submit" id="addSubmit">+</button>
   </div>
 
+  <!-- Project view header -->
   <div class="proj-view-header" id="projHeader" style="display:none">
-    <span style="font-size:10px;letter-spacing:3px;color:var(--muted2);text-transform:uppercase;">Projects</span>
+    <div class="proj-view-left">
+      <span style="font-size:10px;letter-spacing:3px;color:var(--muted2);text-transform:uppercase;">Projects</span>
+      <select class="sort-select" id="sortSelect" onchange="setSortOrder(this.value)">
+        <option value="manual">Manual</option>
+        <option value="alpha">A–Z</option>
+        <option value="date">By date</option>
+      </select>
+    </div>
     <button class="new-proj-btn" onclick="openNewProject()">+ New Project</button>
   </div>
 
@@ -333,9 +508,9 @@
 
 <script>
 // ── Constants ──────────────────────────────────────────────────────────
-const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbz_MN_xQsL1tTj8vo4XRe-g7uskUhUtY9pYgrRlgVH61ILtC0Z2PwTNjtEdperronUQkw/exec';
+const SCRIPT_URL  = 'https://script.google.com/macros/s/AKfycbz_MN_xQsL1tTj8vo4XRe-g7uskUhUtY9pYgrRlgVH61ILtC0Z2PwTNjtEdperronUQkw/exec';
 const STORAGE_KEY = 'swtasks-v3';
-const DATA_VERSION = 1; // increment when data model changes
+const DATA_VERSION = 1;
 const STATUS_TABS = ['Now','Later','Waiting'];
 const STATUS_MAP  = { N:'Now', L:'Later', W:'Waiting' };
 const TAB_KEY     = { Now:'N', Later:'L', Waiting:'W' };
@@ -343,12 +518,6 @@ const ACCENTS     = { Now:'#D4FF4F', Later:'#4FC3FF', Waiting:'#FF8C4B' };
 const MISC_ID     = '__misc__';
 
 // ── Data ───────────────────────────────────────────────────────────────
-// projects: [{ id, name, emoji, label, targetDate }]
-// tasks:    [{ id, projectId, parentId, text, status, done, doneAt, createdAt }]
-// Level 1 = top-level task (parentId null)
-// Level 2 = sub-task      (parentId = level-1 id)
-// Level 3 = grand-child   (parentId = level-2 id)
-
 let data = {
   version: DATA_VERSION,
   projects: [{ id: MISC_ID, name: 'Daily / Misc', emoji: '📋', label: 'misc', targetDate: null }],
@@ -356,114 +525,100 @@ let data = {
 };
 
 let ui = {
-  view: 'status',
-  activeTab: 'Now',
-  showDone: false,
-  expanded: {},       // taskId -> bool
-  editing: null,      // taskId
-  moveOpen: null,
-  editingProj: null,
-  bulkOpen: {},       // projectId -> bool
-  pendingSave: false,
-  saveTimer: null
+  view: 'status', activeTab: 'Now', showDone: false,
+  expanded: {}, editing: null, moveOpen: null,
+  editingProj: null, bulkOpen: {}, saveTimer: null,
+  projShowDone: {}, // projectId -> bool
+  sortOrder: 'manual', // 'manual' | 'alpha' | 'date'
+  theme: 'dark',
+  themePickerOpen: false
 };
 
 // ── Persistence ────────────────────────────────────────────────────────
 function localSave() {
   try { localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); } catch(e) {}
 }
-
 function localLoad() {
   try {
     const s = localStorage.getItem(STORAGE_KEY);
     if (s) data = JSON.parse(s);
-    ensureMisc();
-    migrateData();
+    ensureMisc(); migrateData();
   } catch(e) {}
 }
-
 function ensureMisc() {
   if (!data.projects) data.projects = [];
   if (!data.tasks) data.tasks = [];
-  if (!data.projects.find(p => p.id === MISC_ID)) {
+  if (!data.projects.find(p => p.id === MISC_ID))
     data.projects.unshift({ id: MISC_ID, name: 'Daily / Misc', emoji: '📋', label: 'misc', targetDate: null });
-  }
 }
-
-// Run whenever data is loaded — safe to call on any version
 function migrateData() {
   const v = data.version || 0;
-
-  // v0 → v1: add version field, ensure all tasks have createdAt
   if (v < 1) {
     data.tasks.forEach(t => { if (!t.createdAt) t.createdAt = Date.now(); });
     data.version = 1;
-    console.log('Migrated data to v1');
   }
-
-  // Future migrations go here:
-  // if (v < 2) { ... data.version = 2; }
 }
-
 function backupData() {
   const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
-  const date = new Date().toISOString().slice(0, 10);
-  a.href = url;
-  a.download = `swtasks-backup-${date}.json`;
-  a.click();
-  URL.revokeObjectURL(url);
+  a.href = url; a.download = `swtasks-backup-${new Date().toISOString().slice(0,10)}.json`;
+  a.click(); URL.revokeObjectURL(url);
 }
 
-// ── Cloud sync ─────────────────────────────────────────────────────────
-let syncState = 'idle'; // idle | syncing | ok | err
+// ── Theme ──────────────────────────────────────────────────────────────
+const THEMES = ['dark','light','warm','forest','purprange'];
+function toggleOverflow(e) {
+  if (e) e.stopPropagation();
+  const m = document.getElementById('overflowMenu');
+  m.classList.toggle('open');
+}
+function closeOverflow() {
+  document.getElementById('overflowMenu').classList.remove('open');
+}
+function loadTheme() {
+  ui.theme = localStorage.getItem('swtasks-theme') || 'dark';
+  applyTheme(ui.theme);
+}
+function applyTheme(t) {
+  document.documentElement.setAttribute('data-theme', t);
+  document.querySelectorAll('.theme-swatch').forEach(s => s.classList.remove('active'));
+  const sw = document.getElementById('sw-' + (t === 'purporange' ? 'purporg' : t));
+  if (sw) sw.classList.add('active');
+}
+function setTheme(t) {
+  ui.theme = t;
+  localStorage.setItem('swtasks-theme', t);
+  applyTheme(t);
+  closeOverflow();
+}
 
+// ── Sync ───────────────────────────────────────────────────────────────
 function setSyncState(s, msg) {
-  syncState = s;
   const dot = document.getElementById('syncDot');
   const lbl = document.getElementById('syncLabel');
-  dot.className = 'sync-dot ' + (s === 'syncing' ? 'syncing' : s === 'ok' ? 'ok' : s === 'err' ? 'err' : '');
+  dot.className = 'sync-dot' + (s === 'syncing' ? ' syncing' : s === 'ok' ? ' ok' : s === 'err' ? ' err' : '');
   lbl.textContent = msg || '';
 }
-
 async function cloudLoad() {
-  setSyncState('syncing', 'loading…');
+  setSyncState('syncing','loading…');
   try {
     const res = await fetch(SCRIPT_URL + '?action=load', { cache: 'no-store' });
     const remote = await res.json();
-    if (remote.projects && remote.tasks) {
-      data = remote;
-      ensureMisc();
-      migrateData();
-      localSave();
-    }
-    setSyncState('ok', 'synced');
-    setTimeout(() => setSyncState('idle', ''), 2000);
-  } catch(e) {
-    setSyncState('err', 'offline');
-  }
+    if (remote.projects && remote.tasks) { data = remote; ensureMisc(); migrateData(); localSave(); }
+    setSyncState('ok','synced'); setTimeout(() => setSyncState('idle',''), 2000);
+  } catch(e) { setSyncState('err','offline'); }
 }
-
 function scheduleSave() {
-  localSave();
-  clearTimeout(ui.saveTimer);
+  localSave(); clearTimeout(ui.saveTimer);
   ui.saveTimer = setTimeout(cloudSave, 1200);
 }
-
 async function cloudSave() {
-  setSyncState('syncing', 'saving…');
+  setSyncState('syncing','saving…');
   try {
-    await fetch(SCRIPT_URL, {
-      method: 'POST',
-      body: JSON.stringify({ action: 'save', data }),
-      headers: { 'Content-Type': 'text/plain' }
-    });
-    setSyncState('ok', 'saved');
-    setTimeout(() => setSyncState('idle', ''), 2000);
-  } catch(e) {
-    setSyncState('err', 'save failed');
-  }
+    await fetch(SCRIPT_URL, { method:'POST', body: JSON.stringify({ action:'save', data }), headers:{ 'Content-Type':'text/plain' } });
+    setSyncState('ok','saved'); setTimeout(() => setSyncState('idle',''), 2000);
+  } catch(e) { setSyncState('err','save failed'); }
 }
 
 // ── Helpers ────────────────────────────────────────────────────────────
@@ -472,21 +627,31 @@ function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;'
 function parseStatus(text) {
   const m = text.match(/#([NLWnlw])\b/);
   if (!m) return { text: text.trim(), status: null };
-  return { text: text.replace(/#[NLWnlw]\b/, '').trim(), status: m[1].toUpperCase() };
+  return { text: text.replace(/#[NLWnlw]\b/,'').trim(), status: m[1].toUpperCase() };
 }
 function formatDate(d) {
   if (!d) return '';
-  const dt = new Date(d + 'T00:00:00');
-  return dt.toLocaleDateString('en-US', { month:'short', day:'numeric', year:'numeric' });
+  return new Date(d+'T00:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
 }
-function childrenOf(parentId) { return data.tasks.filter(t => t.parentId === parentId); }
-function effectiveStatus(task) {
-  if (task.status) return task.status;
-  if (task.parentId) {
-    const parent = data.tasks.find(t => t.id === task.parentId);
-    return parent ? effectiveStatus(parent) : null;
-  }
-  return null;
+function childrenOf(pid) { return data.tasks.filter(t => t.parentId === pid); }
+
+function sortedProjects() {
+  const projs = [...data.projects];
+  if (ui.sortOrder === 'alpha') projs.sort((a,b) => a.name.localeCompare(b.name));
+  else if (ui.sortOrder === 'date') projs.sort((a,b) => {
+    if (!a.targetDate && !b.targetDate) return 0;
+    if (!a.targetDate) return 1;
+    if (!b.targetDate) return -1;
+    return a.targetDate.localeCompare(b.targetDate);
+  });
+  // manual: use data.projects order as-is
+  return projs;
+}
+
+function setSortOrder(v) {
+  ui.sortOrder = v;
+  localStorage.setItem('swtasks-sort', v);
+  render();
 }
 
 // ── Render ─────────────────────────────────────────────────────────────
@@ -494,23 +659,20 @@ function render() {
   document.documentElement.style.setProperty('--active-accent', ACCENTS[ui.activeTab] || ACCENTS.Now);
   document.getElementById('vbtnStatus').classList.toggle('active', ui.view === 'status');
   document.getElementById('vbtnProject').classList.toggle('active', ui.view === 'project');
-  document.getElementById('statusTabs').style.display  = ui.view === 'status'  ? '' : 'none';
-  document.getElementById('addRow').style.display      = ui.view === 'status'  ? '' : 'none';
-  document.getElementById('projHeader').style.display  = ui.view === 'project' ? '' : 'none';
-
+  document.getElementById('statusTabs').style.display = ui.view === 'status' ? '' : 'none';
+  document.getElementById('addRow').style.display     = ui.view === 'status' ? '' : 'none';
+  document.getElementById('projHeader').style.display = ui.view === 'project' ? '' : 'none';
   STATUS_TABS.forEach(tab => {
     const k = TAB_KEY[tab];
     const count = data.tasks.filter(t => !t.parentId && !t.done && t.status === k).length;
-    const el = document.getElementById('badge-' + tab);
+    const el = document.getElementById('badge-'+tab);
     if (el) el.textContent = count > 0 ? count : '';
     const tabEl = document.querySelector(`.tab[data-tab="${tab}"]`);
     if (tabEl) tabEl.classList.toggle('active', tab === ui.activeTab);
   });
-
   ui.view === 'status' ? renderStatus() : renderProjects();
-
   if (ui.editing) {
-    const inp = document.getElementById('ei-' + ui.editing);
+    const inp = document.getElementById('ei-'+ui.editing);
     if (inp) { inp.focus(); inp.setSelectionRange(inp.value.length, inp.value.length); }
   }
 }
@@ -538,17 +700,15 @@ function renderStatus() {
 
 function statusTaskHtml(task) {
   const proj = data.projects.find(p => p.id === task.projectId);
-  const projChip = proj && proj.id !== MISC_ID ? `<span class="proj-chip">${esc(proj.emoji||'')} ${esc(proj.label||proj.name)}</span>` : '';
+  const projChip = proj && proj.id !== MISC_ID
+    ? `<span class="proj-chip">${esc(proj.emoji||'')} ${esc(proj.label||proj.name)}</span>` : '';
   const subs = childrenOf(task.id);
   const exp = ui.expanded[task.id];
   const doneC = task.done ? 'done-row' : '';
-
   let textPart = ui.editing === task.id
     ? `<input class="inline-edit" id="ei-${task.id}" value="${esc(task.text)}" onkeydown="editKey(event,'${task.id}')" onblur="saveEdit('${task.id}')" />`
     : `<span class="s-task-text" ondblclick="startEdit('${task.id}')">${esc(task.text)}</span>`;
-
-  let expandBtn = '';
-  let subsHtml = '';
+  let expandBtn = '', subsHtml = '';
   if (subs.length) {
     const dc = subs.filter(s=>s.done).length;
     expandBtn = `<button class="expand-btn" onclick="toggleExp('${task.id}')"><span>${exp?'▾':'▸'}</span><span style="color:var(--muted3);font-size:9px;">${dc}/${subs.length} sub-tasks</span></button>`;
@@ -557,42 +717,51 @@ function statusTaskHtml(task) {
       subs.forEach(s => {
         subsHtml += `<div class="s-sub-row ${s.done?'done-sub':''}">
           <button class="sub-chk" onclick="toggleDone('${s.id}')">${s.done?'✓':''}</button>
-          <span class="s-sub-text">${esc(s.text)}</span>
-        </div>`;
+          <span class="s-sub-text">${esc(s.text)}</span></div>`;
       });
       subsHtml += '</div>';
     }
   }
-
   const others = STATUS_TABS.filter(t => t !== ui.activeTab);
   const moveMenu = ui.moveOpen === task.id ? `<div class="move-menu">${others.map(t=>`<button style="color:${ACCENTS[t]}" onclick="moveTask('${task.id}','${t}')">${t}</button>`).join('')}</div>` : '';
-
   const actions = !task.done && ui.editing !== task.id ? `
     <div class="s-actions">
       <div class="move-wrap"><button class="icon-btn" onclick="toggleMove('${task.id}',event)">↗</button>${moveMenu}</div>
       <button class="icon-btn del" onclick="deleteTask('${task.id}')">×</button>
     </div>` : '';
-
   return `<div class="s-task ${doneC}">
     <button class="chk" onclick="toggleDone('${task.id}')">${task.done?'✓':''}</button>
     <div class="s-task-main">
       <div class="s-task-line">${textPart}${projChip}</div>
       ${expandBtn}${subsHtml}
-    </div>
-    ${actions}
-  </div>`;
+    </div>${actions}</div>`;
 }
 
 // ── Project view ───────────────────────────────────────────────────────
 function renderProjects() {
   const el = document.getElementById('listArea');
+  const projs = sortedProjects();
   let html = '';
-  data.projects.forEach(proj => {
+  projs.forEach((proj, idx) => {
+    const origIdx = data.projects.indexOf(proj);
     const topTasks = data.tasks.filter(t => t.projectId === proj.id && !t.parentId);
-    const openC = topTasks.filter(t=>!t.done).length;
+    const openTasks = topTasks.filter(t => !t.done);
+    const doneTasks = topTasks.filter(t => t.done);
+    const openC = openTasks.length;
     const collapsed = ui.expanded['proj_'+proj.id] === false;
+    const showDone = ui.projShowDone[proj.id];
     const dateStr = proj.targetDate ? `Due ${formatDate(proj.targetDate)}` : proj.id === MISC_ID ? 'ongoing' : 'indefinite';
-    const editBtn = proj.id !== MISC_ID ? `<button class="proj-hdr-btn" onclick="openEditProject('${proj.id}',event)" title="Edit">✎</button>` : '';
+    const isFirst = idx === 0, isLast = idx === projs.length - 1;
+
+    const editBtn = proj.id !== MISC_ID
+      ? `<button class="proj-hdr-btn" onclick="openEditProject('${proj.id}',event)" title="Edit">✎</button>` : '';
+
+    // Up/down only in manual sort mode
+    const reorderBtns = ui.sortOrder === 'manual' ? `
+      <div class="reorder-btns">
+        <button class="reorder-btn" onclick="moveProj('${proj.id}',-1,event)" ${isFirst?'disabled':''} title="Move up">▲</button>
+        <button class="reorder-btn" onclick="moveProj('${proj.id}',1,event)"  ${isLast?'disabled':''} title="Move down">▼</button>
+      </div>` : '';
 
     html += `<div class="proj-card" id="pc-${proj.id}">
       <div class="proj-card-hdr" onclick="toggleProjCollapse('${proj.id}')">
@@ -601,37 +770,46 @@ function renderProjects() {
           <div class="proj-name-text">${esc(proj.name)}</div>
           <div class="proj-meta-text">${dateStr} · ${openC} open</div>
         </div>
-        ${editBtn}
+        ${editBtn}${reorderBtns}
         <button class="proj-hdr-btn">${collapsed?'▸':'▾'}</button>
       </div>`;
 
     if (!collapsed) {
       html += `<div class="proj-body">`;
-      topTasks.forEach(t => { html += projTaskHtml(t, proj); });
+      openTasks.forEach(t => { html += projTaskHtml(t, proj); });
 
-      // Single add input + bulk toggle
+      // Done section in project view
+      if (doneTasks.length) {
+        html += `<button class="proj-done-toggle" onclick="toggleProjDone('${proj.id}')">
+          ${showDone?'▾':'▸'} Done (${doneTasks.length})</button>`;
+        if (showDone) {
+          doneTasks.forEach(t => { html += projTaskHtml(t, proj); });
+          html += `<button class="clear-done" onclick="clearProjDone('${proj.id}')">Clear done</button>`;
+        }
+      }
+
+      // Add input + bulk
       const bulkOpen = ui.bulkOpen[proj.id];
-      html += `
-        <div style="margin-top:8px;">
-          <div class="add-task-row">
-            <input class="add-task-inp" id="pti-${proj.id}" placeholder="Add task… #N #L #W" autocomplete="off" autocorrect="off"
-              onkeydown="if(event.key==='Enter')addProjTask('${proj.id}')" />
-            <button class="add-task-btn" onclick="addProjTask('${proj.id}')">+</button>
-          </div>
-          <button class="bulk-toggle" onclick="toggleBulk('${proj.id}')">
-            ${bulkOpen ? '▾ hide bulk entry' : '▸ bulk entry (paste a list)'}
-          </button>
-          <div class="bulk-area ${bulkOpen?'open':''}">
-            <textarea class="add-task-inp tall" id="bulk-${proj.id}" placeholder="One task per line. First line = parent task, indented lines (space or tab) = sub-tasks.
+      html += `<div style="margin-top:6px;">
+        <div class="add-task-row">
+          <input class="add-task-inp" id="pti-${proj.id}" placeholder="Add task… #N #L #W" autocomplete="off" autocorrect="off"
+            onkeydown="if(event.key==='Enter')addProjTask('${proj.id}')" />
+          <button class="add-task-btn" onclick="addProjTask('${proj.id}')">+</button>
+        </div>
+        <button class="bulk-toggle" onclick="toggleBulk('${proj.id}')">
+          ${bulkOpen?'▾ hide bulk entry':'▸ bulk entry (paste a list)'}
+        </button>
+        <div class="bulk-area ${bulkOpen?'open':''}">
+          <textarea class="add-task-inp tall" id="bulk-${proj.id}"
+            placeholder="One task per line. Indent sub-tasks with 2 spaces or a tab.
 Example:
 Frame finish
   Figure out anodize scheme
-  Find power supply
-  Pick colors" oninput="this.style.height='auto';this.style.height=this.scrollHeight+'px'"></textarea>
-            <button class="bulk-save-btn" onclick="saveBulk('${proj.id}')">Add all</button>
-          </div>
-          <div class="hint">#N = Now · #L = Later · #W = Waiting</div>
-        </div>`;
+  Find power supply" oninput="this.style.height='auto';this.style.height=this.scrollHeight+'px'"></textarea>
+          <button class="bulk-save-btn" onclick="saveBulk('${proj.id}')">Add all</button>
+        </div>
+        <div class="hint">#N = Now · #L = Later · #W = Waiting</div>
+      </div>`;
       html += `</div>`;
     }
     html += `</div>`;
@@ -639,8 +817,10 @@ Frame finish
   html += '<div class="spacer"></div>';
   el.innerHTML = html;
 
+  document.getElementById('sortSelect').value = ui.sortOrder;
+
   if (ui.editing) {
-    const inp = document.getElementById('ei-' + ui.editing);
+    const inp = document.getElementById('ei-'+ui.editing);
     if (inp) { inp.focus(); inp.setSelectionRange(inp.value.length, inp.value.length); }
   }
 }
@@ -650,29 +830,23 @@ function projTaskHtml(task, proj) {
   const exp = ui.expanded[task.id];
   const doneC = task.done ? 'done-row' : '';
   const sk = task.status || 'none';
-
   let textPart = ui.editing === task.id
     ? `<input class="inline-edit" id="ei-${task.id}" value="${esc(task.text)}" onkeydown="editKey(event,'${task.id}')" onblur="saveEdit('${task.id}')" />`
     : `<span class="p-task-text" ondblclick="startEdit('${task.id}')">${esc(task.text)}</span>`;
-
   const expandBtn = subs.length
     ? `<button class="p-expand" onclick="toggleExp('${task.id}')">${exp?'▾':'▸'}</button>`
     : `<span style="width:16px;flex-shrink:0"></span>`;
-
   let subsHtml = '';
   if (exp && subs.length) {
     subsHtml = `<div class="sub-list">`;
-    subs.forEach(s => { subsHtml += subTaskHtml(s, task); });
-    // add sub-task input
-    subsHtml += `
-      <div class="add-task-row" style="padding:6px 0 2px;">
-        <input class="add-task-inp" id="sti-${task.id}" placeholder="Add sub-task… #N #L #W" autocomplete="off" style="font-size:12px;padding:6px 10px;"
-          onkeydown="if(event.key==='Enter')addSubTask('${task.id}','${proj.id}')" />
-        <button class="add-task-btn" style="width:28px;height:28px;font-size:14px;" onclick="addSubTask('${task.id}','${proj.id}')">+</button>
-      </div>`;
-    subsHtml += `</div>`;
+    subs.forEach(s => { subsHtml += subTaskHtml(s, proj); });
+    subsHtml += `<div class="add-task-row" style="padding:5px 0 2px;">
+      <input class="add-task-inp" id="sti-${task.id}" placeholder="Add sub-task… #N #L #W" autocomplete="off"
+        style="font-size:12px;padding:5px 9px;"
+        onkeydown="if(event.key==='Enter')addSubTask('${task.id}','${proj.id}')" />
+      <button class="add-task-btn" style="width:27px;height:27px;font-size:13px;" onclick="addSubTask('${task.id}','${proj.id}')">+</button>
+    </div></div>`;
   }
-
   return `<div class="p-task">
     <div class="p-task-hdr ${doneC}">
       ${expandBtn}
@@ -680,45 +854,37 @@ function projTaskHtml(task, proj) {
       <div style="flex:1;min-width:0;">${textPart}</div>
       <button class="status-pill ${sk}" onclick="cycleStatus('${task.id}')">${task.status||'–'}</button>
       <button class="p-del" onclick="deleteTask('${task.id}')">×</button>
-    </div>
-    ${subsHtml}
-  </div>`;
+    </div>${subsHtml}</div>`;
 }
 
-function subTaskHtml(task, parent) {
+function subTaskHtml(task, proj) {
   const gcs = childrenOf(task.id);
   const exp = ui.expanded[task.id];
   const doneC = task.done ? 'done-row' : '';
   const sk = task.status || 'none';
-
   let textPart = ui.editing === task.id
     ? `<input class="inline-edit" id="ei-${task.id}" value="${esc(task.text)}" onkeydown="editKey(event,'${task.id}')" onblur="saveEdit('${task.id}')" />`
     : `<span class="sub-text" ondblclick="startEdit('${task.id}')">${esc(task.text)}</span>`;
-
   const expandBtn = gcs.length
     ? `<button class="p-expand" onclick="toggleExp('${task.id}')">${exp?'▾':'▸'}</button>`
     : `<span style="width:14px;flex-shrink:0"></span>`;
-
   let gcHtml = '';
   if (exp && gcs.length) {
     gcHtml = `<div class="gc-list">`;
     gcs.forEach(g => { gcHtml += gcTaskHtml(g); });
-    gcHtml += `
-      <div class="add-task-row" style="padding:4px 0 2px;">
-        <input class="add-task-inp" id="gcti-${task.id}" placeholder="Add step…" autocomplete="off" style="font-size:11px;padding:5px 9px;"
-          onkeydown="if(event.key==='Enter')addGcTask('${task.id}','${parent.projectId||parent.id}')" />
-        <button class="add-task-btn" style="width:24px;height:24px;font-size:12px;" onclick="addGcTask('${task.id}','${parent.projectId||parent.id}')">+</button>
-      </div>`;
-    gcHtml += `</div>`;
+    gcHtml += `<div class="add-task-row" style="padding:3px 0 2px;">
+      <input class="add-task-inp" id="gcti-${task.id}" placeholder="Add step…" autocomplete="off"
+        style="font-size:11px;padding:4px 8px;"
+        onkeydown="if(event.key==='Enter')addGcTask('${task.id}','${proj.id||proj.id}')" />
+      <button class="add-task-btn" style="width:24px;height:24px;font-size:12px;" onclick="addGcTask('${task.id}','${proj.id}')">+</button>
+    </div></div>`;
   }
-
   return `<div class="sub-row ${doneC}">
     ${expandBtn}
     <button class="sub-chk2" onclick="toggleDone('${task.id}')">${task.done?'✓':''}</button>
-    <div style="flex:1;min-width:0;">${textPart}</div>
+    <div style="flex:1;min-width:0;">${textPart}${gcHtml ? `<div style="margin-left:-4px">${gcHtml}</div>` : ''}</div>
     <button class="sub-pill ${sk}" onclick="cycleStatus('${task.id}')">${task.status||'–'}</button>
     <button class="sub-del" onclick="deleteTask('${task.id}')">×</button>
-    ${gcHtml ? `</div><div style="padding-left:0">${gcHtml}` : ''}
   </div>`;
 }
 
@@ -738,99 +904,92 @@ function gcTaskHtml(task) {
 function setView(v) { ui.view = v; ui.editing = null; render(); }
 function setTab(t) { ui.activeTab = t; ui.showDone = false; ui.editing = null; ui.moveOpen = null; render(); }
 function toggleShowDone() { ui.showDone = !ui.showDone; render(); }
+function toggleProjDone(pid) { ui.projShowDone[pid] = !ui.projShowDone[pid]; render(); }
 function toggleExp(id) { ui.expanded[id] = !ui.expanded[id]; render(); }
 function toggleProjCollapse(id) { ui.expanded['proj_'+id] = !(ui.expanded['proj_'+id] !== false); render(); }
-function toggleBulk(projId) { ui.bulkOpen[projId] = !ui.bulkOpen[projId]; render(); }
+function toggleBulk(pid) { ui.bulkOpen[pid] = !ui.bulkOpen[pid]; render(); }
 function toggleMove(id, e) { e.stopPropagation(); ui.moveOpen = ui.moveOpen === id ? null : id; render(); }
 
-document.addEventListener('click', () => { if (ui.moveOpen) { ui.moveOpen = null; render(); } });
+function moveProj(id, dir, e) {
+  e.stopPropagation();
+  const idx = data.projects.findIndex(p => p.id === id);
+  const newIdx = idx + dir;
+  if (newIdx < 0 || newIdx >= data.projects.length) return;
+  const tmp = data.projects[idx]; data.projects[idx] = data.projects[newIdx]; data.projects[newIdx] = tmp;
+  scheduleSave(); render();
+}
 
-// Add task from status view
+document.addEventListener('click', () => {
+  if (ui.moveOpen) { ui.moveOpen = null; render(); }
+  closeOverflow();
+});
+document.getElementById('overflowMenu').addEventListener('click', e => e.stopPropagation());
+
 function addTask() {
   const inp = document.getElementById('addInput');
   const raw = inp.value.trim(); if (!raw) return;
   const { text, status } = parseStatus(raw);
-  data.tasks.push({ id: genId(), projectId: MISC_ID, parentId: null, text, status: status || TAB_KEY[ui.activeTab], done: false, createdAt: Date.now() });
-  inp.value = '';
-  scheduleSave(); render(); inp.focus();
+  data.tasks.push({ id:genId(), projectId:MISC_ID, parentId:null, text, status:status||TAB_KEY[ui.activeTab], done:false, createdAt:Date.now() });
+  inp.value = ''; scheduleSave(); render(); inp.focus();
 }
 
-// Add single task to project
 function addProjTask(projId) {
-  const inp = document.getElementById('pti-' + projId); if (!inp) return;
+  const inp = document.getElementById('pti-'+projId); if (!inp) return;
   const raw = inp.value.trim(); if (!raw) return;
   const { text, status } = parseStatus(raw);
-  data.tasks.push({ id: genId(), projectId: projId, parentId: null, text, status: status || 'L', done: false, createdAt: Date.now() });
-  inp.value = '';
-  scheduleSave(); render();
-  const ni = document.getElementById('pti-' + projId); if (ni) ni.focus();
+  data.tasks.push({ id:genId(), projectId:projId, parentId:null, text, status:status||'L', done:false, createdAt:Date.now() });
+  inp.value = ''; scheduleSave(); render();
+  const ni = document.getElementById('pti-'+projId); if (ni) ni.focus();
 }
 
-// Bulk entry
 function saveBulk(projId) {
-  const ta = document.getElementById('bulk-' + projId); if (!ta) return;
+  const ta = document.getElementById('bulk-'+projId); if (!ta) return;
   const lines = ta.value.split('\n').filter(l => l.trim());
-  let currentParentId = null;
-  let currentSubId = null;
-
+  let currentParentId = null, currentSubId = null;
   lines.forEach(line => {
-    const raw = line.replace(/^\t/, '  '); // normalize tabs
-    const indentMatch = raw.match(/^(\s+)/);
-    const indent = indentMatch ? indentMatch[1].length : 0;
-    const { text, status } = parseStatus(raw.trim());
+    const norm = line.replace(/^\t/, '  ');
+    const indent = (norm.match(/^(\s+)/) || ['',''])[1].length;
+    const { text, status } = parseStatus(norm.trim());
     if (!text) return;
-
     if (indent === 0) {
-      // top-level task
       const id = genId();
-      data.tasks.push({ id, projectId: projId, parentId: null, text, status: status || 'L', done: false, createdAt: Date.now() });
-      currentParentId = id;
-      currentSubId = null;
+      data.tasks.push({ id, projectId:projId, parentId:null, text, status:status||'L', done:false, createdAt:Date.now() });
+      currentParentId = id; currentSubId = null;
     } else if (indent <= 3) {
-      // sub-task (any indent 1-3 spaces = level 2)
       if (!currentParentId) {
-        // no parent yet, make top-level
         const id = genId();
-        data.tasks.push({ id, projectId: projId, parentId: null, text, status: status || 'L', done: false, createdAt: Date.now() });
+        data.tasks.push({ id, projectId:projId, parentId:null, text, status:status||'L', done:false, createdAt:Date.now() });
         currentParentId = id;
       } else {
         const id = genId();
-        data.tasks.push({ id, projectId: projId, parentId: currentParentId, text, status: status || null, done: false, createdAt: Date.now() });
+        data.tasks.push({ id, projectId:projId, parentId:currentParentId, text, status:status||null, done:false, createdAt:Date.now() });
         currentSubId = id;
       }
     } else {
-      // grand-child (indent > 3)
       const pid = currentSubId || currentParentId;
-      if (pid) {
-        data.tasks.push({ id: genId(), projectId: projId, parentId: pid, text, status: status || null, done: false, createdAt: Date.now() });
-      }
+      if (pid) data.tasks.push({ id:genId(), projectId:projId, parentId:pid, text, status:null, done:false, createdAt:Date.now() });
     }
   });
-
-  ta.value = '';
-  ui.bulkOpen[projId] = false;
-  // auto-expand first new parent
+  ta.value = ''; ui.bulkOpen[projId] = false;
   if (currentParentId) ui.expanded[currentParentId] = true;
   scheduleSave(); render();
 }
 
 function addSubTask(parentId, projId) {
-  const inp = document.getElementById('sti-' + parentId); if (!inp) return;
+  const inp = document.getElementById('sti-'+parentId); if (!inp) return;
   const raw = inp.value.trim(); if (!raw) return;
   const { text, status } = parseStatus(raw);
   const parent = data.tasks.find(t => t.id === parentId);
-  data.tasks.push({ id: genId(), projectId: projId, parentId, text, status: status || (parent ? parent.status : null), done: false, createdAt: Date.now() });
-  inp.value = '';
-  scheduleSave(); render();
+  data.tasks.push({ id:genId(), projectId:projId, parentId, text, status:status||(parent?parent.status:null), done:false, createdAt:Date.now() });
+  inp.value = ''; scheduleSave(); render();
 }
 
 function addGcTask(parentId, projId) {
-  const inp = document.getElementById('gcti-' + parentId); if (!inp) return;
+  const inp = document.getElementById('gcti-'+parentId); if (!inp) return;
   const raw = inp.value.trim(); if (!raw) return;
   const { text } = parseStatus(raw);
-  data.tasks.push({ id: genId(), projectId: projId, parentId, text, status: null, done: false, createdAt: Date.now() });
-  inp.value = '';
-  scheduleSave(); render();
+  data.tasks.push({ id:genId(), projectId:projId, parentId, text, status:null, done:false, createdAt:Date.now() });
+  inp.value = ''; scheduleSave(); render();
 }
 
 function toggleDone(id) {
@@ -840,76 +999,70 @@ function toggleDone(id) {
 }
 
 function deleteTask(id) {
-  // delete task and all descendants
-  function descendants(tid) {
-    const kids = data.tasks.filter(t => t.parentId === tid);
-    return [tid, ...kids.flatMap(k => descendants(k.id))];
+  function desc(tid) {
+    return [tid, ...data.tasks.filter(t=>t.parentId===tid).flatMap(k=>desc(k.id))];
   }
-  const ids = descendants(id);
-  data.tasks = data.tasks.filter(t => !ids.includes(t.id));
+  data.tasks = data.tasks.filter(t => !desc(id).includes(t.id));
   scheduleSave(); render();
 }
 
 function clearDone() {
   const k = TAB_KEY[ui.activeTab];
-  function descendants(tid) {
-    const kids = data.tasks.filter(t => t.parentId === tid);
-    return [tid, ...kids.flatMap(k => descendants(k.id))];
-  }
-  const doneIds = data.tasks.filter(t => !t.parentId && t.done && t.status === k).flatMap(t => descendants(t.id));
-  data.tasks = data.tasks.filter(t => !doneIds.includes(t.id));
+  function desc(tid) { return [tid, ...data.tasks.filter(t=>t.parentId===tid).flatMap(k=>desc(k.id))]; }
+  const ids = data.tasks.filter(t => !t.parentId && t.done && t.status===k).flatMap(t=>desc(t.id));
+  data.tasks = data.tasks.filter(t => !ids.includes(t.id));
+  scheduleSave(); render();
+}
+
+function clearProjDone(projId) {
+  function desc(tid) { return [tid, ...data.tasks.filter(t=>t.parentId===tid).flatMap(k=>desc(k.id))]; }
+  const ids = data.tasks.filter(t => t.projectId===projId && !t.parentId && t.done).flatMap(t=>desc(t.id));
+  data.tasks = data.tasks.filter(t => !ids.includes(t.id));
   scheduleSave(); render();
 }
 
 function moveTask(id, toTab) {
   const t = data.tasks.find(t => t.id === id); if (!t) return;
   t.status = TAB_KEY[toTab]; t.done = false;
-  ui.moveOpen = null;
-  scheduleSave(); render();
+  ui.moveOpen = null; scheduleSave(); render();
 }
 
 function cycleStatus(id) {
-  const cycle = [null, 'N', 'L', 'W'];
+  const cycle = [null,'N','L','W'];
   const t = data.tasks.find(t => t.id === id); if (!t) return;
-  t.status = cycle[(cycle.indexOf(t.status) + 1) % cycle.length];
+  t.status = cycle[(cycle.indexOf(t.status)+1) % cycle.length];
   scheduleSave(); render();
 }
 
 function startEdit(id) { ui.editing = id; render(); }
 function saveEdit(id) {
-  const inp = document.getElementById('ei-' + id);
-  if (inp) {
-    const text = inp.value.trim();
-    if (text) { const t = data.tasks.find(t => t.id === id); if (t) { t.text = text; scheduleSave(); } }
-  }
+  const inp = document.getElementById('ei-'+id);
+  if (inp) { const text = inp.value.trim(); if (text) { const t = data.tasks.find(t=>t.id===id); if(t){t.text=text;scheduleSave();} } }
   ui.editing = null; render();
 }
 function editKey(e, id) {
-  if (e.key === 'Enter') { e.preventDefault(); saveEdit(id); }
-  if (e.key === 'Escape') { ui.editing = null; render(); }
+  if (e.key==='Enter') { e.preventDefault(); saveEdit(id); }
+  if (e.key==='Escape') { ui.editing=null; render(); }
 }
 
 // ── Project CRUD ───────────────────────────────────────────────────────
 function openNewProject() {
   ui.editingProj = null;
   document.getElementById('modalTitle').textContent = 'New Project';
-  document.getElementById('mProjName').value = '';
-  document.getElementById('mProjEmoji').value = '';
-  document.getElementById('mProjLabel').value = '';
-  document.getElementById('mProjDate').value = '';
+  ['mProjName','mProjEmoji','mProjLabel','mProjDate'].forEach(id => document.getElementById(id).value = '');
   document.getElementById('mProjDel').style.display = 'none';
   document.getElementById('projModal').style.display = 'flex';
   setTimeout(() => document.getElementById('mProjName').focus(), 50);
 }
 function openEditProject(id, e) {
   e.stopPropagation();
-  const proj = data.projects.find(p => p.id === id); if (!proj) return;
+  const proj = data.projects.find(p=>p.id===id); if (!proj) return;
   ui.editingProj = id;
   document.getElementById('modalTitle').textContent = 'Edit Project';
-  document.getElementById('mProjName').value = proj.name;
-  document.getElementById('mProjEmoji').value = proj.emoji || '';
-  document.getElementById('mProjLabel').value = proj.label || '';
-  document.getElementById('mProjDate').value = proj.targetDate || '';
+  document.getElementById('mProjName').value  = proj.name;
+  document.getElementById('mProjEmoji').value = proj.emoji||'';
+  document.getElementById('mProjLabel').value = proj.label||'';
+  document.getElementById('mProjDate').value  = proj.targetDate||'';
   document.getElementById('mProjDel').style.display = '';
   document.getElementById('projModal').style.display = 'flex';
 }
@@ -919,23 +1072,23 @@ function saveProject() {
   const label = document.getElementById('mProjLabel').value.trim() || name.slice(0,10);
   const targetDate = document.getElementById('mProjDate').value || null;
   if (ui.editingProj) {
-    const proj = data.projects.find(p => p.id === ui.editingProj);
+    const proj = data.projects.find(p=>p.id===ui.editingProj);
     if (proj) Object.assign(proj, { name, emoji, label, targetDate });
   } else {
-    data.projects.push({ id: genId(), name, emoji, label, targetDate });
+    data.projects.push({ id:genId(), name, emoji, label, targetDate });
   }
   scheduleSave(); closeModal(); render();
 }
 function deleteProject() {
-  if (!ui.editingProj || ui.editingProj === MISC_ID) return;
-  data.tasks.filter(t => t.projectId === ui.editingProj).forEach(t => { t.projectId = MISC_ID; });
-  data.projects = data.projects.filter(p => p.id !== ui.editingProj);
+  if (!ui.editingProj || ui.editingProj===MISC_ID) return;
+  data.tasks.filter(t=>t.projectId===ui.editingProj).forEach(t=>{ t.projectId=MISC_ID; });
+  data.projects = data.projects.filter(p=>p.id!==ui.editingProj);
   scheduleSave(); closeModal(); render();
 }
-function closeModal() { document.getElementById('projModal').style.display = 'none'; }
+function closeModal() { document.getElementById('projModal').style.display='none'; }
 
 // ── Morning Review ─────────────────────────────────────────────────────
-function getApiKey() { return localStorage.getItem('swtasks-apikey') || ''; }
+function getApiKey() { return localStorage.getItem('swtasks-apikey')||''; }
 function saveApiKey() {
   const v = document.getElementById('keyInp').value.trim(); if (!v) return;
   localStorage.setItem('swtasks-apikey', v);
@@ -945,28 +1098,28 @@ function saveApiKey() {
 function closeReview() { document.getElementById('reviewPanel').classList.remove('visible'); }
 
 async function startReview() {
-  if (!getApiKey()) { document.getElementById('keyPanel').style.display = 'flex'; return; }
+  if (!getApiKey()) { document.getElementById('keyPanel').style.display='flex'; return; }
   const btn = document.getElementById('reviewBtn');
   btn.classList.add('loading');
   const panel = document.getElementById('reviewPanel');
   const body  = document.getElementById('reviewBody');
   panel.classList.add('visible');
-  body.innerHTML = '<span style="color:var(--muted2);font-size:13px;font-family:var(--sans)">Scanning…</span>';
+  body.innerHTML = '<span style="color:var(--muted2);font-size:13px;font-family:IBM Plex Sans,sans-serif">Scanning…</span>';
 
   const snapshot = STATUS_TABS.map(tab => {
     const k = TAB_KEY[tab];
-    const items = data.tasks.filter(t => !t.parentId && !t.done && t.status === k);
+    const items = data.tasks.filter(t => !t.parentId && !t.done && t.status===k);
     if (!items.length) return `${tab}: (empty)`;
-    return tab + ':\n' + items.map(t => {
-      const proj = data.projects.find(p => p.id === t.projectId);
-      const pl = proj && proj.id !== MISC_ID ? ` [${proj.label}]` : '';
+    return tab+':\n'+items.map(t => {
+      const proj = data.projects.find(p=>p.id===t.projectId);
+      const pl = proj && proj.id!==MISC_ID ? ` [${proj.label}]` : '';
       return `  - ${t.text}${pl}`;
     }).join('\n');
   }).join('\n\n');
 
-  const projSummary = data.projects.filter(p => p.id !== MISC_ID).map(p => {
-    const open = data.tasks.filter(t => t.projectId === p.id && !t.done && !t.parentId).length;
-    return `${p.emoji||''} ${p.name} (${open} open${p.targetDate ? ', due '+formatDate(p.targetDate) : ''})`;
+  const projSummary = data.projects.filter(p=>p.id!==MISC_ID).map(p => {
+    const open = data.tasks.filter(t=>t.projectId===p.id&&!t.done&&!t.parentId).length;
+    return `${p.emoji||''} ${p.name} (${open} open${p.targetDate?', due '+formatDate(p.targetDate):''})`;
   }).join('\n');
 
   const prompt = `You are a productivity assistant for Simon Weiss (Meta hardware/VR engineer, youth soccer coach, cyclist, managing family medical logistics at Fred Hutch).
@@ -978,7 +1131,7 @@ Projects:
 ${projSummary || '(none yet)'}
 
 1. SNAPSHOT: 2-3 sentences on where things stand. Flag anything stale or misplaced.
-2. SUGGESTIONS: 3-5 missing tasks based on Simon's situation. Include status and project hint.
+2. SUGGESTIONS: 3-5 missing tasks. Include status and project hint.
 
 End with:
 SUGGESTIONS_JSON:
@@ -987,59 +1140,53 @@ SUGGESTIONS_JSON:
   try {
     const res = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'x-api-key': getApiKey(), 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' },
-      body: JSON.stringify({ model: 'claude-sonnet-4-20250514', max_tokens: 1000, messages: [{ role: 'user', content: prompt }] })
+      headers: { 'Content-Type':'application/json', 'x-api-key':getApiKey(), 'anthropic-version':'2023-06-01', 'anthropic-dangerous-direct-browser-access':'true' },
+      body: JSON.stringify({ model:'claude-sonnet-4-20250514', max_tokens:1000, messages:[{role:'user',content:prompt}] })
     });
     const d = await res.json();
-    if (d.error) { body.innerHTML = `<span style="color:var(--danger)">${esc(d.error.message)}</span>`; btn.classList.remove('loading'); return; }
-
-    const text = d.content?.[0]?.text || '';
+    if (d.error) { body.innerHTML=`<span style="color:var(--danger)">${esc(d.error.message)}</span>`; btn.classList.remove('loading'); return; }
+    const text = d.content?.[0]?.text||'';
     const jIdx = text.indexOf('SUGGESTIONS_JSON:');
-    const narrative = (jIdx > -1 ? text.slice(0, jIdx) : text).trim();
+    const narrative = (jIdx>-1?text.slice(0,jIdx):text).trim();
     let sugs = [];
-    if (jIdx > -1) { try { sugs = JSON.parse(text.slice(jIdx + 'SUGGESTIONS_JSON:'.length).trim()); } catch(e) {} }
-
-    body.innerHTML = `<div style="margin-bottom:10px;font-family:var(--sans);font-size:13px;line-height:1.6;color:var(--muted)">${esc(narrative)}</div>`;
+    if (jIdx>-1) { try { sugs=JSON.parse(text.slice(jIdx+'SUGGESTIONS_JSON:'.length).trim()); } catch(e){} }
+    body.innerHTML = `<div style="margin-bottom:10px;font-family:'IBM Plex Sans',sans-serif;font-size:13px;line-height:1.6;color:var(--muted)">${esc(narrative)}</div>`;
     if (sugs.length) {
       const lbl = document.createElement('div');
-      lbl.style.cssText = 'font-size:9px;letter-spacing:3px;color:var(--muted2);text-transform:uppercase;margin-bottom:7px;font-family:var(--mono);';
-      lbl.textContent = 'Suggested';
-      body.appendChild(lbl);
-      sugs.forEach((s, i) => {
-        const sk = ['N','L','W'].includes(s.status) ? s.status : 'L';
-        const tname = STATUS_MAP[sk] || 'Later';
+      lbl.style.cssText='font-size:9px;letter-spacing:3px;color:var(--muted2);text-transform:uppercase;margin-bottom:7px;font-family:IBM Plex Mono,monospace;';
+      lbl.textContent='Suggested'; body.appendChild(lbl);
+      sugs.forEach((s,i) => {
+        const sk = ['N','L','W'].includes(s.status)?s.status:'L';
+        const tname = STATUS_MAP[sk]||'Later';
         const row = document.createElement('div');
-        row.className = 'sug-item';
-        row.innerHTML = `<span class="sug-tab ${tname}">${tname}</span><span class="sug-text">${esc(s.text)}</span><button class="add-sug" id="sb-${i}" onclick="addSuggestion(${i},'${esc(s.text)}','${sk}','${esc(s.projectHint||'')}')">+ Add</button>`;
+        row.className='sug-item';
+        row.innerHTML=`<span class="sug-tab ${tname}">${tname}</span><span class="sug-text">${esc(s.text)}</span><button class="add-sug" id="sb-${i}" onclick="addSuggestion(${i},'${esc(s.text)}','${sk}','${esc(s.projectHint||'')}')">+ Add</button>`;
         body.appendChild(row);
       });
     }
-  } catch(e) {
-    body.innerHTML = `<span style="color:var(--danger)">Error: ${esc(e.message)}</span>`;
-  }
+  } catch(e) { body.innerHTML=`<span style="color:var(--danger)">Error: ${esc(e.message)}</span>`; }
   btn.classList.remove('loading');
 }
 
 function addSuggestion(idx, text, status, hint) {
   let projId = MISC_ID;
-  if (hint) {
-    const m = data.projects.find(p => p.label && p.label.toLowerCase().includes(hint.toLowerCase()));
-    if (m) projId = m.id;
-  }
-  data.tasks.push({ id: genId(), projectId: projId, parentId: null, text, status, done: false, createdAt: Date.now() });
+  if (hint) { const m = data.projects.find(p=>p.label&&p.label.toLowerCase().includes(hint.toLowerCase())); if(m) projId=m.id; }
+  data.tasks.push({ id:genId(), projectId:projId, parentId:null, text, status, done:false, createdAt:Date.now() });
   scheduleSave();
-  const btn = document.getElementById('sb-' + idx);
-  if (btn) { btn.textContent = '✓'; btn.classList.add('added'); btn.disabled = true; }
+  const btn = document.getElementById('sb-'+idx);
+  if (btn) { btn.textContent='✓'; btn.classList.add('added'); btn.disabled=true; }
   render();
 }
 
 // ── Init ───────────────────────────────────────────────────────────────
-document.getElementById('addInput').addEventListener('keydown', e => { if (e.key === 'Enter') addTask(); });
+document.getElementById('addInput').addEventListener('keydown', e => { if(e.key==='Enter') addTask(); });
 document.getElementById('addSubmit').addEventListener('click', addTask);
 
+loadTheme();
+ui.sortOrder = localStorage.getItem('swtasks-sort') || 'manual';
 localLoad();
 render();
-cloudLoad(); // load from cloud on start, overlay onto local
+cloudLoad();
 </script>
 </body>
 </html>
