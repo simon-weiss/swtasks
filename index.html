@@ -399,6 +399,52 @@
       font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 2px; padding: 11px;
       cursor: pointer; text-transform: uppercase; font-weight: 600; }
 
+    /* ── Daily check-in ── */
+    .checkin-bar { flex-shrink: 0; border-bottom: 1px solid var(--border); }
+    .checkin-collapsed { display: flex; align-items: center; gap: 8px; padding: 8px 20px; }
+    .checkin-chip { font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: 1px;
+      padding: 3px 8px; border-radius: 8px; flex-shrink: 0; font-weight: 600; text-transform: uppercase; }
+    .checkin-note-preview { flex: 1; min-width: 0; font-family: 'IBM Plex Sans', sans-serif; font-size: 12px;
+      color: var(--muted2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .checkin-edit-link, .checkin-history-link { background: none; border: none; color: var(--muted2);
+      font-family: 'IBM Plex Mono', monospace; font-size: 9px; letter-spacing: 2px; text-transform: uppercase;
+      cursor: pointer; padding: 3px 2px; flex-shrink: 0; transition: color 0.15s; }
+    .checkin-edit-link:hover, .checkin-history-link:hover { color: var(--now); }
+
+    .checkin-expanded { padding: 9px 20px; }
+    .checkin-row1 { display: flex; align-items: center; gap: 10px; }
+    .checkin-label { font-size: 9px; letter-spacing: 2px; color: var(--muted3); text-transform: uppercase; flex-shrink: 0; }
+    .checkin-scores { display: flex; gap: 5px; flex: 1; }
+    .checkin-score-btn { --sc: var(--muted2); width: 26px; height: 26px; border-radius: 6px;
+      border: 1.5px solid var(--sc); background: none; color: var(--sc);
+      font-family: 'IBM Plex Mono', monospace; font-size: 12px; font-weight: 600; cursor: pointer;
+      transition: all 0.15s; display: flex; align-items: center; justify-content: center; }
+    .checkin-score-btn:hover { background: color-mix(in srgb, var(--sc) 15%, transparent); }
+    .checkin-score-btn.sel { background: var(--sc); color: #0A0A0A; }
+    .checkin-row2 { display: flex; gap: 7px; margin-top: 8px; }
+    .checkin-note-inp { flex: 1; background: var(--surface2); border: 1px solid var(--border2); border-radius: 7px;
+      color: var(--text); font-family: 'IBM Plex Sans', sans-serif; font-size: 13px; padding: 7px 10px;
+      outline: none; transition: border-color 0.15s; -webkit-appearance: none; }
+    .checkin-note-inp::placeholder { color: var(--muted3); }
+    .checkin-note-inp:focus { border-color: var(--now); }
+    .checkin-done-btn { background: none; border: 1px solid var(--border2); border-radius: 7px; color: var(--muted2);
+      font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: 2px; text-transform: uppercase;
+      padding: 0 12px; cursor: pointer; flex-shrink: 0; transition: all 0.15s; }
+    .checkin-done-btn:hover { border-color: var(--now); color: var(--now); }
+
+    /* ── Check-in history ── */
+    .history-view { flex: 1; overflow-y: auto; padding: 0 0 6px; -webkit-overflow-scrolling: touch; display: none; flex-direction: column; }
+    .history-header { flex-shrink: 0; display: flex; align-items: center; gap: 12px; padding: 10px 20px; border-bottom: 1px solid var(--border); }
+    .history-back { background: none; border: 1px solid var(--border2); border-radius: 6px; color: var(--muted2);
+      font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: 1px; padding: 5px 10px;
+      cursor: pointer; transition: all 0.15s; }
+    .history-back:hover { border-color: var(--now); color: var(--now); }
+    .history-title { font-size: 10px; letter-spacing: 3px; color: var(--muted3); text-transform: uppercase; }
+    .history-list { padding: 4px 20px; }
+    .history-row { display: flex; align-items: flex-start; gap: 10px; padding: 9px 0; border-bottom: 1px solid var(--border); }
+    .history-date { font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: var(--muted2); width: 78px; flex-shrink: 0; padding-top: 3px; }
+    .history-note-text { flex: 1; min-width: 0; font-family: 'IBM Plex Sans', sans-serif; font-size: 13px; color: var(--muted); line-height: 1.5; padding-top: 2px; }
+
     .spacer { height: 32px; }
   </style>
 </head>
@@ -427,6 +473,9 @@
       <button class="tab" data-tab="Waiting" onclick="setTab('Waiting')">Waiting<span class="badge" id="badge-Waiting"></span></button>
     </div>
   </div>
+
+  <!-- Daily check-in -->
+  <div class="checkin-bar" id="checkinBar"></div>
 
   <!-- Overflow menu -->
   <div class="overflow-menu" id="overflowMenu" onclick="event.stopPropagation()">
@@ -474,6 +523,15 @@
   </div>
 
   <div class="list-area" id="listArea"></div>
+
+  <!-- Check-in history -->
+  <div class="history-view" id="historyView">
+    <div class="history-header">
+      <button class="history-back" onclick="closeHistory()">← Back</button>
+      <span class="history-title">Check-in History</span>
+    </div>
+    <div class="history-list" id="historyList"></div>
+  </div>
 </div>
 
 <!-- Project modal -->
@@ -510,7 +568,7 @@
 // ── Constants ──────────────────────────────────────────────────────────
 const SCRIPT_URL  = 'https://script.google.com/macros/s/AKfycbz_MN_xQsL1tTj8vo4XRe-g7uskUhUtY9pYgrRlgVH61ILtC0Z2PwTNjtEdperronUQkw/exec';
 const STORAGE_KEY = 'swtasks-v3';
-const DATA_VERSION = 1;
+const DATA_VERSION = 2;
 const STATUS_TABS = ['Now','Later','Waiting'];
 const STATUS_MAP  = { N:'Now', L:'Later', W:'Waiting' };
 const TAB_KEY     = { Now:'N', Later:'L', Waiting:'W' };
@@ -521,7 +579,8 @@ const MISC_ID     = '__misc__';
 let data = {
   version: DATA_VERSION,
   projects: [{ id: MISC_ID, name: 'Daily / Misc', emoji: '📋', label: 'misc', targetDate: null }],
-  tasks: []
+  tasks: [],
+  checkins: [] // { date:'YYYY-MM-DD', score:1-5, note:'', savedAt }
 };
 
 let ui = {
@@ -531,7 +590,9 @@ let ui = {
   projShowDone: {}, // projectId -> bool
   sortOrder: 'manual', // 'manual' | 'alpha' | 'date'
   theme: 'dark',
-  themePickerOpen: false
+  themePickerOpen: false,
+  checkinOpen: false, // expanded picker/note visible for today's entry
+  showHistory: false
 };
 
 // ── Persistence ────────────────────────────────────────────────────────
@@ -548,6 +609,7 @@ function localLoad() {
 function ensureMisc() {
   if (!data.projects) data.projects = [];
   if (!data.tasks) data.tasks = [];
+  if (!data.checkins) data.checkins = [];
   if (!data.projects.find(p => p.id === MISC_ID))
     data.projects.unshift({ id: MISC_ID, name: 'Daily / Misc', emoji: '📋', label: 'misc', targetDate: null });
 }
@@ -556,6 +618,10 @@ function migrateData() {
   if (v < 1) {
     data.tasks.forEach(t => { if (!t.createdAt) t.createdAt = Date.now(); });
     data.version = 1;
+  }
+  if (v < 2) {
+    if (!data.checkins) data.checkins = [];
+    data.version = 2;
   }
 }
 function backupData() {
@@ -654,14 +720,114 @@ function setSortOrder(v) {
   render();
 }
 
+// ── Daily check-in ────────────────────────────────────────────────────
+const CHECKIN_LABELS = { 1:'quiet', 2:'steady', 3:'busy', 4:'intense', 5:'maxed out' };
+function checkinColor(score) {
+  const stops = {
+    1: 'var(--now)',
+    2: 'color-mix(in srgb, var(--now), var(--waiting))',
+    3: 'var(--waiting)',
+    4: 'color-mix(in srgb, var(--waiting), var(--danger))',
+    5: 'var(--danger)'
+  };
+  return stops[score] || 'var(--muted2)';
+}
+function todayStr() {
+  const d = new Date();
+  return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+}
+function getCheckin(date) { return data.checkins.find(c => c.date === date); }
+function setCheckinScore(score) {
+  const date = todayStr();
+  let c = getCheckin(date);
+  if (!c) { c = { date, score, note: '', savedAt: Date.now() }; data.checkins.push(c); }
+  else { c.score = score; c.savedAt = Date.now(); }
+  ui.checkinOpen = true; // keep open so an optional note can be added
+  scheduleSave();
+  renderCheckin();
+}
+function setCheckinNote(v) {
+  const c = getCheckin(todayStr()); if (!c) return;
+  c.note = v; c.savedAt = Date.now();
+  scheduleSave();
+}
+function checkinNoteKey(e) { if (e.key === 'Enter') { e.target.blur(); collapseCheckin(); } }
+function collapseCheckin() {
+  const c = getCheckin(todayStr());
+  if (c) c.note = (c.note||'').trim();
+  ui.checkinOpen = false;
+  scheduleSave();
+  renderCheckin();
+}
+function openCheckinEdit() {
+  ui.checkinOpen = true;
+  renderCheckin();
+  setTimeout(() => { const el = document.getElementById('checkinNoteInp'); if (el) el.focus(); }, 30);
+}
+function openHistory() { ui.showHistory = true; render(); }
+function closeHistory() { ui.showHistory = false; render(); }
+
+function renderCheckin() {
+  const bar = document.getElementById('checkinBar');
+  if (!bar) return;
+  const c = getCheckin(todayStr());
+
+  if (c && !ui.checkinOpen) {
+    const col = checkinColor(c.score);
+    bar.innerHTML = `
+      <div class="checkin-collapsed">
+        <span class="checkin-chip" style="background:color-mix(in srgb, ${col} 18%, transparent); color:${col}">${c.score} · ${CHECKIN_LABELS[c.score]}</span>
+        ${c.note ? `<span class="checkin-note-preview">${esc(c.note)}</span>` : '<span class="checkin-note-preview"></span>'}
+        <button class="checkin-edit-link" onclick="openCheckinEdit()">Edit</button>
+        <button class="checkin-history-link" onclick="openHistory()">History</button>
+      </div>`;
+    return;
+  }
+
+  const scoreBtns = [1,2,3,4,5].map(s => {
+    const sel = c && c.score === s;
+    return `<button class="checkin-score-btn ${sel?'sel':''}" style="--sc:${checkinColor(s)}" onclick="setCheckinScore(${s})" title="${CHECKIN_LABELS[s]}">${s}</button>`;
+  }).join('');
+  const noteRow = c ? `
+      <div class="checkin-row2">
+        <input class="checkin-note-inp" id="checkinNoteInp" placeholder="add a note (optional)" value="${esc(c.note||'')}" oninput="setCheckinNote(this.value)" onkeydown="checkinNoteKey(event)" />
+        <button class="checkin-done-btn" onclick="collapseCheckin()">Done</button>
+      </div>` : '';
+  bar.innerHTML = `
+    <div class="checkin-expanded">
+      <div class="checkin-row1">
+        <span class="checkin-label">Workload</span>
+        <div class="checkin-scores">${scoreBtns}</div>
+        <button class="checkin-history-link" onclick="openHistory()">History</button>
+      </div>${noteRow}
+    </div>`;
+}
+
+function renderHistory() {
+  const el = document.getElementById('historyList');
+  const entries = [...data.checkins].sort((a,b) => b.date.localeCompare(a.date));
+  if (!entries.length) { el.innerHTML = '<div class="empty-state">— NO ENTRIES YET —</div>'; return; }
+  el.innerHTML = entries.map(c => {
+    const col = checkinColor(c.score);
+    return `<div class="history-row">
+      <span class="history-date">${esc(c.date)}</span>
+      <span class="checkin-chip" style="background:color-mix(in srgb, ${col} 18%, transparent); color:${col}">${c.score} · ${esc(CHECKIN_LABELS[c.score]||'')}</span>
+      <span class="history-note-text">${esc(c.note||'')}</span>
+    </div>`;
+  }).join('');
+}
+
 // ── Render ─────────────────────────────────────────────────────────────
 function render() {
   document.documentElement.style.setProperty('--active-accent', ACCENTS[ui.activeTab] || ACCENTS.Now);
   document.getElementById('vbtnStatus').classList.toggle('active', ui.view === 'status');
   document.getElementById('vbtnProject').classList.toggle('active', ui.view === 'project');
-  document.getElementById('statusTabs').style.display = ui.view === 'status' ? '' : 'none';
-  document.getElementById('addRow').style.display     = ui.view === 'status' ? '' : 'none';
-  document.getElementById('projHeader').style.display = ui.view === 'project' ? '' : 'none';
+  document.getElementById('statusTabs').style.display = (!ui.showHistory && ui.view === 'status') ? '' : 'none';
+  document.getElementById('addRow').style.display     = (!ui.showHistory && ui.view === 'status') ? '' : 'none';
+  document.getElementById('projHeader').style.display = (!ui.showHistory && ui.view === 'project') ? '' : 'none';
+  document.getElementById('checkinBar').style.display = ui.showHistory ? 'none' : '';
+  document.getElementById('listArea').style.display   = ui.showHistory ? 'none' : '';
+  document.getElementById('historyView').style.display = ui.showHistory ? 'flex' : 'none';
   STATUS_TABS.forEach(tab => {
     const k = TAB_KEY[tab];
     const count = data.tasks.filter(t => !t.parentId && !t.done && t.status === k).length;
@@ -670,7 +836,9 @@ function render() {
     const tabEl = document.querySelector(`.tab[data-tab="${tab}"]`);
     if (tabEl) tabEl.classList.toggle('active', tab === ui.activeTab);
   });
-  ui.view === 'status' ? renderStatus() : renderProjects();
+  renderCheckin();
+  if (ui.showHistory) { renderHistory(); }
+  else { ui.view === 'status' ? renderStatus() : renderProjects(); }
   if (ui.editing) {
     const inp = document.getElementById('ei-'+ui.editing);
     if (inp) { inp.focus(); inp.setSelectionRange(inp.value.length, inp.value.length); }
@@ -901,7 +1069,7 @@ function gcTaskHtml(task) {
 }
 
 // ── Actions ────────────────────────────────────────────────────────────
-function setView(v) { ui.view = v; ui.editing = null; render(); }
+function setView(v) { ui.view = v; ui.editing = null; ui.showHistory = false; render(); }
 function setTab(t) { ui.activeTab = t; ui.showDone = false; ui.editing = null; ui.moveOpen = null; render(); }
 function toggleShowDone() { ui.showDone = !ui.showDone; render(); }
 function toggleProjDone(pid) { ui.projShowDone[pid] = !ui.projShowDone[pid]; render(); }
